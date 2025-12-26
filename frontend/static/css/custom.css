@@ -1,0 +1,97 @@
+/* Variables personnalisées */
+:root {
+    --primary-color: #00d1b2;
+    --success-color: #48c78e;
+    --warning-color: #ffe08a;
+    --danger-color: #f14668;
+}
+
+/* Ajustements globaux */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main.section {
+    flex: 1;
+}
+
+/* Notifications auto-dismiss */
+.notification .delete {
+    cursor: pointer;
+}
+
+/* Progress bars pour enveloppes */
+.progress-wrapper {
+    position: relative;
+}
+
+.progress-label {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    line-height: 1.5;
+    font-weight: 600;
+}
+
+/* Cards uniformes */
+.card {
+    height: 100%;
+}
+
+/* Bouton d'action flottant */
+.floating-button {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 100;
+}
+
+/* Transitions HTMX */
+.htmx-swapping {
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+}
+
+.htmx-settling {
+    opacity: 1;
+    transition: opacity 200ms ease-in;
+}
+
+/* Alpine.js transitions */
+[x-cloak] {
+    display: none !important;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+    .floating-button {
+        bottom: 1rem;
+        right: 1rem;
+    }
+}
+
+/* Charts containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

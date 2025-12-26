@@ -1,0 +1,94 @@
+<nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+    <div class="container">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <span class="icon">
+                    <i class="fas fa-wallet"></i>
+                </span>
+                <span class="ml-2"><strong>Cash Stuffing</strong></span>
+            </a>
+
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+
+        <div id="navbarMenu" class="navbar-menu">
+            <div class="navbar-start">
+                {% if user %}
+                <a class="navbar-item" href="/dashboard">
+                    <span class="icon"><i class="fas fa-chart-line"></i></span>
+                    <span>Tableau de bord</span>
+                </a>
+                <a class="navbar-item" href="/transactions">
+                    <span class="icon"><i class="fas fa-exchange-alt"></i></span>
+                    <span>Transactions</span>
+                </a>
+                <a class="navbar-item" href="/envelopes">
+                    <span class="icon"><i class="fas fa-envelope"></i></span>
+                    <span>Enveloppes</span>
+                </a>
+                <a class="navbar-item" href="/accounts">
+                    <span class="icon"><i class="fas fa-university"></i></span>
+                    <span>Comptes</span>
+                </a>
+                <a class="navbar-item" href="/categories">
+                    <span class="icon"><i class="fas fa-tags"></i></span>
+                    <span>Catégories</span>
+                </a>
+                {% endif %}
+            </div>
+
+            <div class="navbar-end">
+                {% if user %}
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">
+                        <span class="icon"><i class="fas fa-user"></i></span>
+                        <span>{{ user.email }}</span>
+                    </a>
+
+                    <div class="navbar-dropdown">
+                        <a class="navbar-item" href="/profile">
+                            <span class="icon"><i class="fas fa-cog"></i></span>
+                            <span>Paramètres</span>
+                        </a>
+                        <hr class="navbar-divider">
+                        <a class="navbar-item" href="/logout">
+                            <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                            <span>Déconnexion</span>
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="navbar-item">
+                    <div class="buttons">
+                        <a class="button is-light" href="/login">
+                            Connexion
+                        </a>
+                        <a class="button is-primary" href="/register">
+                            <strong>Inscription</strong>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+// Toggle mobile menu
+document.addEventListener('DOMContentLoaded', () => {
+    const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+    $navbarBurgers.forEach(el => {
+        el.addEventListener('click', () => {
+            const target = el.dataset.target;
+            const $target = document.getElementById(target);
+            el.classList.toggle('is-active');
+            $target.classList.toggle('is-active');
+        });
+    });
+});
+</script>

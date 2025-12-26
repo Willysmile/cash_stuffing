@@ -1,0 +1,93 @@
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
+import os
+from pathlib import Path
+
+# Import des routes (à créer)
+# from app.routes import auth, categories, accounts, envelopes, transactions
+
+# Configuration des chemins
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Gestion du cycle de vie de l'application"""
+    # Startup
+    print("🚀 Démarrage de l'application Cash Stuffing")
+    # Ici: initialisation de la base de données, connexions, etc.
+    
+    yield
+    
+    # Shutdown
+    print("👋 Arrêt de l'application")
+    # Ici: fermeture des connexions, nettoyage, etc.
+
+# Création de l'application FastAPI
+app = FastAPI(
+    title="Cash Stuffing API",
+    description="API pour la gestion de budget par enveloppes",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Configuration CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # À restreindre en production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Montage des fichiers statiques
+app.mount(
+    "/static",
+    StaticFiles(directory=str(FRONTEND_DIR / "static")),
+    name="static"
+)
+
+# Configuration des templates Jinja2
+templates = Jinja2Templates(directory=str(FRONTEND_DIR / "templates"))
+
+# Ajout de filtres personnalisés pour Jinja2
+def format_currency(value):
+    """Filtre pour formater les montants en euros"""
+    return f"{value:,.2f} €".replace(",", " ").replace(".", ",")
+
+templates.env.filters["currency"] = format_currency
+
+# Routes de l'API
+# app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+# app.include_router(categories.router, prefix="/api/categories", tags=["Categories"])
+# app.include_router(accounts.router, prefix="/api/accounts", tags=["Bank Accounts"])
+# app.include_router(envelopes.router, prefix="/api/envelopes", tags=["Envelopes"])
+# app.include_router(transactions.router, prefix="/api/transactions", tags=["Transactions"])
+
+# Route de test
+@app.get("/")
+async def root():
+    """Route racine de l'API"""
+    return {
+        "message": "Bienvenue sur l'API Cash Stuffing",
+        "version": "1.0.0",
+        "docs": "/docs"
+    }
+
+# Route de santé
+@app.get("/health")
+async def health():
+    """Endpoint de health check"""
+    return {"status": "healthy"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )
