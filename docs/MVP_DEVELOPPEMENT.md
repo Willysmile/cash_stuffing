@@ -1,7 +1,8 @@
-# Journal de Développement - Cash Stuffing App
+# Journal de Développement MVP - Cash Stuffing App
 
 📅 **Date de début** : 27 décembre 2025  
-🎯 **Objectif** : Développer le MVP de l'application Cash Stuffing
+🎯 **Objectif** : Développer le MVP (Phase 1) de l'application Cash Stuffing  
+📌 **Branche Git** : `feature/mvp-database-models`
 
 ---
 
