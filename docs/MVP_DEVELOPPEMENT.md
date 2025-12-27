@@ -221,102 +221,79 @@ DATABASE_URL=sqlite+aiosqlite:///./cashstuffing.db
 **Erreur** : `OperationalError: unable to open database file`  
 **Solution** : Conversion du chemin relatif en chemin absolu avec `Path().parent.parent / filename`
 
-### Étape 4 : Schémas Pydantic (À faire)
-- Créer les schémas de validation pour chaque modèle
-- Schémas pour création (Create), lecture (Read), mise à jour (Update)
-- Utiliser inheritance pour éviter la duplication
+---
 
-### Étape 5 : Routes API - Authentification (À faire)
-- POST `/api/auth/register` : Inscription
-- POST `/api/auth/login` : Connexion (génération JWT)
-- POST `/api/auth/refresh` : Refresh token
-- GET `/api/auth/me` : Profil utilisateur
-- Middleware d'authentification JWT
+## 📚 Ressources utiles
 
-### Étape 6 : Routes API - Catégories (À faire)
-- GET `/api/categories` : Liste des catégories
-- POST `/api/categories` : Créer une catégorie
-- PUT `/api/categories/{id}` : Modifier
-- DELETE `/api/categories/{id}` : Supprimer
-
-### Étape 7 : Routes API - Comptes Bancaires (À faire)
-- CRUD complet pour les comptes
-- Calcul automatique du solde
-
-### Étape 8 : Routes API - Enveloppes (À faire)
-- CRUD complet
-- Réallocation entre enveloppes
-
-### Étape 9 : Routes API - Transactions (À faire)
-- CRUD complet
-- Mise à jour automatique des soldes (compte + enveloppe)
-- Filtres et recherche
-
-### Étape 10 : Routes API - Wish Lists (À faire)
-- CRUD pour listes et items
-- Calculs automatiques (total, progression)
-
-### Étape 11 : Templates Frontend (À faire)
-- Base layout avec Jinja2
-- Pages pour chaque onglet
-- Formulaires et interactions AJAX
-
-### Étape 12 : Tests (À faire)
-- Tests unitaires des modèles
-- Tests d'intégration des routes API
-- Tests end-to-end
+- [Documentation FastAPI](https://fastapi.tiangolo.com/)
+- [SQLAlchemy 2.0 Docs](https://docs.sqlalchemy.org/en/20/)
+- [Alembic Tutorial](https://alembic.sqlalchemy.org/en/latest/tutorial.html)
+- [Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
 
 ---
 
-**État actuel** : ✅ **Fondations terminées (Modèles + Migrations)**  
-**Prochaine tâche** : Créer les schémas Pydantic
+## 🔜 Prochaines étapes
 
----
-
-**Dernière mise à jour** : 27 décembre 2025 - 14:3
-
-1. ✅ Créer ce fichier de documentation
-2. ⏳ Créer le fichier `.env`
-3. ⏳ Implémenter tous les modèles SQLAlchemy
-4. ⏳ Configurer et générer les migrations Alembic
-5. 📋 Créer les schémas Pydantic
-6. 📋 Implémenter les routes API (auth, categories, accounts, etc.)
-7. 📋 Créer les templates frontend
-8. 📋 Tests unitaires et d'intégration
-
----
-
-**Dernière mise à jour** : 27 décembre 2025
-✅ Étape 3 : Migrations Alembic (TERMINÉ)
+### ✅ Étape 4 : Schémas Pydantic (TERMINÉ)
 **Date** : 27 décembre 2025  
 **Statut** : Terminé
 
-#### Actions réalisées
+#### Schémas créés
 
-✅ **Alembic initialisé** : `alembic init alembic`
+✅ **6 modules de schémas** implémentés avec validation complète :
 
-✅ **Configuration** :
-- `alembic.ini` : commenté le sqlalchemy.url (chargé dynamiquement depuis .env)
-- `alembic/env.py` : modifié pour :
-  - Charger `.env` avec `python-dotenv`
-  - Importer Base et tous les modèles
-  - Convertir URL async (`aiosqlite`) en sync (`sqlite`) pour Alembic
-  - Utiliser un chemin absolu pour la base SQLite
+**1. User Schemas** (`backend/app/schemas/user.py`)
+- `UserBase`, `UserCreate`, `UserUpdate`, `UserRead`
+- `UserLogin` : Authentification
+- `Token`, `TokenData` : JWT
 
-✅ **Migration initiale générée** :
-```bash
-alembic revision --autogenerate -m "Initial migration - MVP tables"
-```
-- Fichier : `alembic/versions/56ce580bbb76_initial_migration_mvp_tables.py`
-- Tables créées : users, categories, bank_accounts, envelopes, transactions, wish_lists, wish_list_items
+**2. Category Schemas** (`backend/app/schemas/category.py`)
+- `CategoryBase`, `CategoryCreate`, `CategoryUpdate`, `CategoryRead`
+- `CategoryWithChildren` : Avec sous-catégories (nested)
 
-✅ **Migration appliquée** :
-```bash
-alembic upgrade head
-```
-- Base de données `cashstuffing.db` créée avec toutes les tables
+**3. BankAccount Schemas** (`backend/app/schemas/bank_account.py`)
+- `BankAccountBase`, `BankAccountCreate`, `BankAccountUpdate`, `BankAccountRead`
+- `BankAccountAdjustBalance` : Ajustement manuel du solde
 
-**Problèmes résolus** :
-1. ❌ Erreur `ALLOWED_ORIGINS` dans .env non déclarée dans Settings → Corrigé en commentant la variable
-2. ❌ Driver async `aiosqlite` incompatible avec Alembic → Conversion en driver sync `sqlite` pour les migrations
-3. ❌ Chemin relatif SQLite causant erreur "unable to open database file" → Conversion en chemin absolu dans `env.py
+**4. Envelope Schemas** (`backend/app/schemas/envelope.py`)
+- `EnvelopeBase`, `EnvelopeCreate`, `EnvelopeUpdate`, `EnvelopeRead`
+- `EnvelopeReallocate` : Transfert entre enveloppes
+- `EnvelopeWithStats` : Avec statistiques (%, dépassement)
+
+**5. Transaction Schemas** (`backend/app/schemas/transaction.py`)
+- **Enums** : `TransactionType`, `TransactionPriority`
+- `TransactionBase`, `TransactionCreate`, `TransactionUpdate`, `TransactionRead`
+- `TransactionWithDetails` : Avec noms expanded
+- `TransactionFilter` : Filtres de recherche avancée
+
+**6. WishList Schemas** (`backend/app/schemas/wish_list.py`)
+- **Enums** : `WishListType`, `WishListStatus`, `ItemPriority`, `ItemStatus`
+- **Liste** : `WishListCreate`, `WishListUpdate`, `WishListRead`
+- **Articles** : `WishListItemCreate`, `WishListItemUpdate`, `WishListItemRead`
+- **Avec relations** : `WishListWithItems`, `WishListSummary`
+
+#### Caractéristiques
+
+✅ **Validation automatique** : regex, min/max length, contraintes numériques, URLs, emails  
+✅ **Architecture 3 couches** : Base, Create, Update, Read  
+✅ **Schémas enrichis** : WithDetails, WithStats, Summary  
+✅ **Fichier central** : `backend/app/schemas/__init__.py` exporte tout
+
+---
+
+### Étape 5 : Routes API - Authentification (À faire)
+- POST `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`
+- GET `/api/auth/me`
+- Middleware JWT + hash bcrypt
+
+### Étapes 6-12 : À faire
+Routes API (Categories, BankAccounts, Envelopes, Transactions, WishLists), Frontend, Tests
+
+---
+
+**État actuel** : ✅ **Fondations + Validation terminées (Modèles + Migrations + Schémas)**  
+**Prochaine tâche** : Implémenter les routes API d'authentification
+
+---
+
+**Dernière mise à jour** : 27 décembre 2025 - 15:05
