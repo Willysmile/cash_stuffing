@@ -96,6 +96,44 @@ Permet de suivre ses dépenses, gérer plusieurs comptes bancaires, planifier se
 - Lien avec les transactions de remboursement
 - Impact sur le patrimoine net
 
+### Onglet Wish List / Listes de Cadeaux
+- **Créer plusieurs listes** thématiques :
+  - Cadeaux à recevoir (Noël personnel, anniversaire, liste de mariage)
+  - Cadeaux à offrir (idées cadeaux pour proches, événements)
+  - Listes mixtes ou personnalisées
+- **Pour chaque liste** :
+  - Nom et description
+  - Type : à recevoir / à offrir
+  - Date cible (optionnel)
+  - Budget total alloué (optionnel)
+  - Statut : active / archivée
+- **Pour chaque article** :
+  - Nom du produit
+  - Description / notes
+  - Prix estimé ou exact
+  - Quantité souhaitée
+  - Lien URL vers le produit (boutique en ligne)
+  - Image (URL optionnel)
+  - Priorité : indispensable / souhaité / bonus
+  - Statut : à acheter / acheté
+  - Pour qui (si liste "à offrir")
+  - Date d'ajout
+  - Tags personnalisés
+- **Calculs automatiques** :
+  - Budget total de la liste
+  - Montant déjà dépensé
+  - Montant restant à prévoir
+- **Lien avec le budget** :
+  - Créer une enveloppe dédiée à une liste
+  - Voir combien épargner par mois pour tout acheter avant la date cible
+  - Marquer comme "acheté" peut créer automatiquement une transaction
+- **Gestion** :
+  - Modifier/supprimer des listes et articles
+  - Réorganiser les articles (ordre de priorité)
+  - Filtres : par priorité, statut, prix, type
+  - Vue grille ou liste
+  - Export en PDF imprimable
+
 ### Onglet Catégories
 - Créer des catégories personnalisées (alimentation, transport, logement, assurance, santé, loisirs, bricolage, etc.)
 - Créer des sous-catégories pour chaque catégorie
@@ -268,9 +306,10 @@ Permet de suivre ses dépenses, gérer plusieurs comptes bancaires, planifier se
 3. Onglet Enveloppes (créer, allouer, voir solde, lier à un compte)
 4. Onglet Dépenses (ajouter, lister, associer à catégorie, enveloppe et compte)
 5. Onglet Revenus (ajouter, lister, lier à un compte)
-6. Tableau de bord basique (totaux par compte et global)
-7. Authentification simple
-8. Sécurité de base (hash password, CSRF)
+6. Onglet Wish List (créer listes, ajouter articles avec prix/lien/priorité)
+7. Tableau de bord basique (totaux par compte et global)
+8. Authentification simple
+9. Sécurité de base (hash password, CSRF)
 
 ### Phase 2 - Core Features
 9. Transferts entre comptes
@@ -346,6 +385,8 @@ Permet de suivre ses dépenses, gérer plusieurs comptes bancaires, planifier se
 - **goals** : id, user_id, name, description, target_amount, current_amount, monthly_contribution, deadline, category, color, icon, created_at, updated_at, completed_at, status (active/completed/abandoned)
 - **debts** : id, user_id, name, creditor, initial_amount, remaining_amount, interest_rate, monthly_payment, start_date, end_date, type (mortgage/car/consumer/personal)
 - **debt_payments** : id, debt_id, transaction_id, amount, date, principal, interest
+- **wish_lists** : id, user_id, name, description, list_type (to_receive/to_give/mixed), target_date, budget_allocated, envelope_id, status (active/archived), created_at, updated_at
+- **wish_list_items** : id, wish_list_id, name, description, price, quantity, url, image_url, priority (must_have/wanted/bonus), status (to_buy/purchased), recipient (for "to_give" lists), tags (JSON array), purchased_date, transaction_id, created_at, updated_at, sort_order
 - **badges** : id, user_id, badge_type, earned_date, name, description
 - **challenges** : id, user_id, challenge_type, target, current, start_date, end_date, status (active/completed/failed)
 - **calendar_events** : id, user_id, event_type (transaction/goal/debt/recurring), event_date, amount, description, status
