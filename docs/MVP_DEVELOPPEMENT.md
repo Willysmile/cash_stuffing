@@ -281,19 +281,99 @@ DATABASE_URL=sqlite+aiosqlite:///./cashstuffing.db
 
 ---
 
-### Étape 5 : Routes API - Authentification (À faire)
-- POST `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`
-- GET `/api/auth/me`
-- Middleware JWT + hash bcrypt
+### ✅ Étape 5 : Routes API - Authentification (TERMINÉ)
+**Date** : 27 décembre 2025  
+**Statut** : Terminé et testé
 
-### Étapes 6-12 : À faire
-Routes API (Categories, BankAccounts, Envelopes, Transactions, WishLists), Frontend, Tests
+#### Implémentation JWT + bcrypt
+
+✅ **Utilitaires d'authentification** (`backend/app/utils/auth.py`) :
+- `hash_password()` : Hash bcrypt (limite 72 bytes)
+- `verify_password()` : Vérification hash
+- `create_access_token()` : JWT access (30 min)
+- `create_refresh_token()` : JWT refresh (7 jours)
+- `decode_token()` : Décodage + validation JWT
+- `verify_token_type()` : Vérification type (access/refresh)
+
+✅ **Dépendances FastAPI** (`backend/app/utils/dependencies.py`) :
+- `get_current_user()` : Extrait l'user depuis le token Bearer
+- `get_current_active_user()` : Vérifie que l'user est actif
+- `verify_refresh_token()` : Valide les refresh tokens
+- Gestion d'erreurs complète (401/403)
+
+✅ **Routes d'authentification** (`backend/app/routes/auth.py`) :
+
+**POST `/api/auth/register`**
+- Création utilisateur avec email unique
+- Hash automatique du mot de passe
+- Retourne l'utilisateur créé (sans password)
+
+**POST `/api/auth/login`**
+- Authentification email + password
+- Vérification hash bcrypt
+- Retourne access_token + refresh_token JWT
+
+**POST `/api/auth/refresh`**
+- Renouvellement des tokens
+- Requiert refresh_token valide
+- Vérifie que l'user existe et est actif
+- Retourne nouveaux tokens
+
+**GET `/api/auth/me`**
+- Récupère infos utilisateur courant
+- Requiert access_token valide
+- Protection Bearer token
+
+#### Intégration
+
+✅ **Routeur intégré** dans `backend/app/main.py` :
+```python
+app.include_router(auth_router, prefix="/api")
+```
+
+✅ **Dépendances installées** :
+- `email-validator==2.3.0` (validation emails Pydantic)
+- `dnspython==2.8.0` (résolution DNS pour emails)
+
+#### Tests manuels réussis
+
+✅ **4 endpoints testés avec succès** :
+
+1. **Register** : Utilisateur `test@example.com` créé (ID: 1)
+2. **Login** : Tokens JWT générés et valides
+3. **Me** : Profil récupéré avec Bearer token
+4. **Refresh** : Nouveaux tokens générés depuis refresh_token
+
+#### Problèmes résolus
+
+🔧 **Problème 1** : Incompatibilité passlib + bcrypt récent
+- **Solution** : Utilisation directe de `bcrypt.hashpw()` et `bcrypt.checkpw()`
+
+🔧 **Problème 2** : AttributeError `datetime.timezone`
+- **Solution** : Import `from datetime import timezone` (pas `datetime.timezone.utc`)
+
+🔧 **Problème 3** : JWT "Subject must be a string"
+- **Solution** : Conversion `user.id` → `str(user.id)` dans les tokens
+- Reconversion `int(user_id_str)` lors du décodage
 
 ---
 
-**État actuel** : ✅ **Fondations + Validation terminées (Modèles + Migrations + Schémas)**  
-**Prochaine tâche** : Implémenter les routes API d'authentification
+### Étape 6 : Routes API - Catégories (À faire)
+- GET `/api/categories` (liste avec filtres)
+- POST `/api/categories` (création)
+- GET `/api/categories/{id}` (détails)
+- PUT `/api/categories/{id}` (modification)
+- DELETE `/api/categories/{id}` (suppression)
+- Protection JWT sur toutes les routes
+
+### Étapes 7-12 : À faire
+Routes API (BankAccounts, Envelopes, Transactions, WishLists), Frontend, Tests
 
 ---
 
-**Dernière mise à jour** : 27 décembre 2025 - 15:05
+**État actuel** : ✅ **Fondations + Validation + Authentification terminées**  
+**Prochaine tâche** : Implémenter les routes API pour les Catégories
+
+---
+
+**Dernière mise à jour** : 27 décembre 2025 - 15:33

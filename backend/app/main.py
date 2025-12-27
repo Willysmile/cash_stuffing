@@ -6,8 +6,8 @@ from contextlib import asynccontextmanager
 import os
 from pathlib import Path
 
-# Import des routes (à créer)
-# from app.routes import auth, categories, accounts, envelopes, transactions
+# Import des routes
+from app.routes import auth_router
 
 # Configuration des chemins
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -60,12 +60,15 @@ def format_currency(value):
 
 templates.env.filters["currency"] = format_currency
 
-# Routes de l'API
-# app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-# app.include_router(categories.router, prefix="/api/categories", tags=["Categories"])
-# app.include_router(accounts.router, prefix="/api/accounts", tags=["Bank Accounts"])
-# app.include_router(envelopes.router, prefix="/api/envelopes", tags=["Envelopes"])
-# app.include_router(transactions.router, prefix="/api/transactions", tags=["Transactions"])
+# === Routes de l'API ===
+app.include_router(auth_router, prefix="/api")
+
+# Routes à ajouter :
+# app.include_router(categories_router, prefix="/api")
+# app.include_router(bank_accounts_router, prefix="/api")
+# app.include_router(envelopes_router, prefix="/api")
+# app.include_router(transactions_router, prefix="/api")
+# app.include_router(wish_lists_router, prefix="/api")
 
 # Route de test
 @app.get("/")
