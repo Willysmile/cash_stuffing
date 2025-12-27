@@ -17,70 +17,67 @@
 
         <div id="navbarMenu" class="navbar-menu">
             <div class="navbar-start">
-                {% if user %}
-                <a class="navbar-item" href="/dashboard">
-                    <span class="icon"><i class="fas fa-chart-line"></i></span>
-                    <span>Tableau de bord</span>
-                </a>
-                <a class="navbar-item" href="/transactions">
-                    <span class="icon"><i class="fas fa-exchange-alt"></i></span>
-                    <span>Transactions</span>
-                </a>
-                <a class="navbar-item" href="/envelopes">
-                    <span class="icon"><i class="fas fa-envelope"></i></span>
-                    <span>Enveloppes</span>
-                </a>
-                <a class="navbar-item" href="/accounts">
-                    <span class="icon"><i class="fas fa-university"></i></span>
-                    <span>Comptes</span>
-                </a>
-                <a class="navbar-item" href="/categories">
-                    <span class="icon"><i class="fas fa-tags"></i></span>
-                    <span>Catégories</span>
-                </a>
-                {% endif %}
+                <!-- Menu principal (visible si connecté) -->
+                <div id="authenticatedMenu" style="display: none;">
+                    <a class="navbar-item" href="/dashboard">
+                        <span class="icon"><i class="fas fa-chart-line"></i></span>
+                        <span>Tableau de bord</span>
+                    </a>
+                    <a class="navbar-item" href="/transactions">
+                        <span class="icon"><i class="fas fa-exchange-alt"></i></span>
+                        <span>Transactions</span>
+                    </a>
+                    <a class="navbar-item" href="/envelopes">
+                        <span class="icon"><i class="fas fa-envelope"></i></span>
+                        <span>Enveloppes</span>
+                    </a>
+                    <a class="navbar-item" href="/accounts">
+                        <span class="icon"><i class="fas fa-university"></i></span>
+                        <span>Comptes</span>
+                    </a>
+                    <a class="navbar-item" href="/categories">
+                        <span class="icon"><i class="fas fa-tags"></i></span>
+                        <span>Catégories</span>
+                    </a>
+                </div>
             </div>
 
             <div class="navbar-end">
-                {% if user %}
-                <div class="navbar-item has-dropdown is-hoverable">
+                <!-- Menu utilisateur connecté -->
+                <div id="userMenu" class="navbar-item has-dropdown is-hoverable" style="display: none;">
                     <a class="navbar-link">
                         <span class="icon"><i class="fas fa-user"></i></span>
-                        <span>{{ user.email }}</span>
+                        <span id="userEmail">Utilisateur</span>
                     </a>
 
                     <div class="navbar-dropdown">
-                        <a class="navbar-item" href="/profile">
-                            <span class="icon"><i class="fas fa-cog"></i></span>
-                            <span>Paramètres</span>
-                        </a>
-                        <hr class="navbar-divider">
-                        <a class="navbar-item" href="/logout">
+                        <a class="navbar-item" onclick="logout()">
                             <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
                             <span>Déconnexion</span>
                         </a>
                     </div>
                 </div>
-                {% else %}
-                <div class="navbar-item">
+                
+                <!-- Menu visiteur non connecté -->
+                <div id="guestMenu" class="navbar-item">
                     <div class="buttons">
-                        <a class="button is-light" href="/login">
+                        <a class="button is-light" href="/auth/login">
                             Connexion
                         </a>
-                        <a class="button is-primary" href="/register">
+                        <a class="button is-primary" href="/auth/register">
                             <strong>Inscription</strong>
                         </a>
                     </div>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
 </nav>
 
 <script>
-// Toggle mobile menu
+// Toggle mobile menu burger
 document.addEventListener('DOMContentLoaded', () => {
+    // Burger menu toggle
     const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
     $navbarBurgers.forEach(el => {
         el.addEventListener('click', () => {
@@ -90,5 +87,49 @@ document.addEventListener('DOMContentLoaded', () => {
             $target.classList.toggle('is-active');
         });
     });
+    
+    // Vérifier l'authentification et afficher le menu approprié
+    updateNavbar();
 });
+
+function updateNavbar() {
+    const token = localStorage.getItem('access_token');
+    const isAuthenticated = !!token;
+    
+    // Afficher/masquer les menus selon l'état de connexion
+    document.getElementById('authenticatedMenu').style.display = isAuthenticated ? 'contents' : 'none';
+    document.getElementById('userMenu').style.display = isAuthenticated ? 'block' : 'none';
+    document.getElementById('guestMenu').style.display = isAuthenticated ? 'none' : 'block';
+    
+    // Récupérer et afficher l'email de l'utilisateur si connecté
+    if (isAuthenticated) {
+        fetchUserInfo();
+    }
+}
+
+async function fetchUserInfo() {
+    try {
+        const response = await fetch('/api/auth/me', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            }
+        });
+        
+        if (response.ok) {
+            const user = await response.json();
+            document.getElementById('userEmail').textContent = user.email;
+        } else if (response.status === 401) {
+            // Token invalide, déconnecter
+            logout();
+        }
+    } catch (error) {
+        console.error('Erreur lors de la récupération des infos utilisateur:', error);
+    }
+}
+
+function logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    window.location.href = '/auth/login';
+}
 </script>
