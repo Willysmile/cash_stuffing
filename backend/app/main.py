@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 
 # Import des routes
-from app.routes import auth_router, categories_router, bank_accounts_router, envelopes_router, transactions_router
+from app.routes import auth_router, categories_router, bank_accounts_router, envelopes_router, transactions_router, wish_lists_router
 
 # Configuration des chemins
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -66,9 +66,7 @@ app.include_router(categories_router, prefix="/api")
 app.include_router(bank_accounts_router, prefix="/api")
 app.include_router(envelopes_router, prefix="/api")
 app.include_router(transactions_router, prefix="/api")
-
-# Routes à ajouter :
-# app.include_router(wish_lists_router, prefix="/api")
+app.include_router(wish_lists_router, prefix="/api")
 
 # Route de test
 @app.get("/")
