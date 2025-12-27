@@ -7,7 +7,15 @@ import os
 from pathlib import Path
 
 # Import des routes
-from app.routes import auth_router, categories_router, bank_accounts_router, envelopes_router, transactions_router, wish_lists_router
+from app.routes import (
+    auth_router, 
+    categories_router, 
+    bank_accounts_router, 
+    envelopes_router, 
+    transactions_router, 
+    wish_lists_router
+)
+from app.routes.frontend import router as frontend_router
 
 # Configuration des chemins
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -68,15 +76,8 @@ app.include_router(envelopes_router, prefix="/api")
 app.include_router(transactions_router, prefix="/api")
 app.include_router(wish_lists_router, prefix="/api")
 
-# Route de test
-@app.get("/")
-async def root():
-    """Route racine de l'API"""
-    return {
-        "message": "Bienvenue sur l'API Cash Stuffing",
-        "version": "1.0.0",
-        "docs": "/docs"
-    }
+# === Routes du frontend ===
+app.include_router(frontend_router)
 
 # Route de santé
 @app.get("/health")

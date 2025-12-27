@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Comptes bancaires - Cash Stuffing{% endblock %}
+
+{% block content %}
+<section class="hero is-success">
+    <div class="hero-body">
+        <p class="title">Comptes bancaires</p>
+        <p class="subtitle">Gérez vos comptes bancaires</p>
+    </div>
+</section>
+
+<div class="section">
+    <div class="level">
+        <div class="level-left"></div>
+        <div class="level-right">
+            <div class="level-item">
+                <button class="button is-success" onclick="showAddModal()">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Nouveau compte</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="columns is-multiline" id="accountsList">
+        <div class="column is-12 has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Chargement...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'ajout/édition -->
+<div class="modal" id="accountModal">
+    <div class="modal-background" onclick="closeModal()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title" id="modalTitle">Nouveau compte</p>
+            <button class="delete" onclick="closeModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <form id="accountForm">
+                <input type="hidden" id="accountId">
+                
+                <div class="field">
+                    <label class="label">Nom du compte *</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" name="name" placeholder="Compte courant" required>
+                        <span class="icon is-left">
+                            <i class="fas fa-university"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Type de compte *</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select name="account_type" required>
+                                <option value="">Sélectionnez un type</option>
+                                <option value="checking">Compte courant</option>
+                                <option value="savings">Compte épargne</option>
+                                <option value="other">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Solde initial (€)</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="number" step="0.01" name="balance" value="0">
+                        <span class="icon is-left">
+                            <i class="fas fa-euro-sign"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Description</label>
+                    <div class="control">
+                        <textarea class="textarea" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+            </form>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-success" onclick="saveAccount()">Enregistrer</button>
+            <button class="button" onclick="closeModal()">Annuler</button>
+        </footer>
+    </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+const token = localStorage.getItem('access_token');
+const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+let accounts = [];
+
+async function loadAccounts() {
+    const response = await fetch(`${API_BASE}/bank_accounts`, { headers });
+    if (response.ok) {
+        accounts = await response.json();
+        displayAccounts(accounts);
+    }
+}
+
+function displayAccounts(data) {
+    const container = document.getElementById('accountsList');
+    
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="column is-12"><p class="has-text-centered has-text-grey">Aucun compte bancaire</p></div>';
+        return;
+    }
+    
+    const typeLabels = {
+        'checking': 'Compte courant',
+        'savings': 'Compte épargne',
+        'other': 'Autre'
+    };
+    
+    const typeIcons = {
+        'checking': 'fa-university',
+        'savings': 'fa-piggy-bank',
+        'other': 'fa-wallet'
+    };
+    
+    const html = data.map(a => {
+        const balance = parseFloat(a.balance || 0);
+        const balanceColor = balance >= 0 ? 'has-text-success' : 'has-text-danger';
+        
+        return `
+            <div class="column is-4">
+                <div class="card">
+                    <header class="card-header has-background-success">
+                        <p class="card-header-title has-text-white">
+                            <span class="icon">
+                                <i class="fas ${typeIcons[a.account_type] || 'fa-university'}"></i>
+                            </span>
+                            <span>${a.name}</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <p>
+                                <span class="tag is-info is-light">
+                                    ${typeLabels[a.account_type] || a.account_type}
+                                </span>
+                            </p>
+                            
+                            ${a.description ? `<p>${a.description}</p>` : ''}
+                            
+                            <div class="box has-background-light">
+                                <p class="heading">Solde actuel</p>
+                                <p class="title is-4 ${balanceColor}">
+                                    ${balance.toFixed(2)} €
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="card-footer">
+                        <a class="card-footer-item" onclick="editAccount(${a.id})">
+                            <span class="icon"><i class="fas fa-edit"></i></span>
+                            <span>Modifier</span>
+                        </a>
+                        <a class="card-footer-item has-text-danger" onclick="deleteAccount(${a.id})">
+                            <span class="icon"><i class="fas fa-trash"></i></span>
+                            <span>Supprimer</span>
+                        </a>
+                    </footer>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+}
+
+function showAddModal() {
+    document.getElementById('modalTitle').textContent = 'Nouveau compte';
+    document.getElementById('accountForm').reset();
+    document.getElementById('accountId').value = '';
+    document.getElementById('accountModal').classList.add('is-active');
+}
+
+async function editAccount(id) {
+    const account = accounts.find(a => a.id === id);
+    if (!account) return;
+    
+    document.getElementById('modalTitle').textContent = 'Modifier le compte';
+    document.getElementById('accountId').value = account.id;
+    document.querySelector('[name="name"]').value = account.name;
+    document.querySelector('[name="account_type"]').value = account.account_type;
+    document.querySelector('[name="balance"]').value = account.balance || 0;
+    document.querySelector('[name="description"]').value = account.description || '';
+    
+    document.getElementById('accountModal').classList.add('is-active');
+}
+
+async function saveAccount() {
+    const form = document.getElementById('accountForm');
+    const formData = new FormData(form);
+    const id = document.getElementById('accountId').value;
+    
+    const data = {
+        name: formData.get('name'),
+        account_type: formData.get('account_type'),
+        balance: parseFloat(formData.get('balance')) || 0,
+        description: formData.get('description') || null
+    };
+    
+    const url = id ? `${API_BASE}/bank_accounts/${id}` : `${API_BASE}/bank_accounts`;
+    const method = id ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+        closeModal();
+        await loadAccounts();
+    } else {
+        const error = await response.json();
+        alert('Erreur: ' + (error.detail || 'Échec de la sauvegarde'));
+    }
+}
+
+async function deleteAccount(id) {
+    if (!confirm('Voulez-vous vraiment supprimer ce compte ? Cela supprimera également toutes les enveloppes et transactions associées.')) return;
+    
+    const response = await fetch(`${API_BASE}/bank_accounts/${id}`, {
+        method: 'DELETE',
+        headers
+    });
+    
+    if (response.ok) {
+        await loadAccounts();
+    } else {
+        const error = await response.json();
+        alert('Erreur: ' + (error.detail || 'Impossible de supprimer ce compte'));
+    }
+}
+
+function closeModal() {
+    document.getElementById('accountModal').classList.remove('is-active');
+}
+
+document.addEventListener('DOMContentLoaded', loadAccounts);
+</script>
+{% endblock %}

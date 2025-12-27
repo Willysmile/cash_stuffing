@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion - Cash Stuffing{% endblock %}
+
+{% block content %}
+<div class="columns is-centered">
+    <div class="column is-5-tablet is-4-desktop is-3-widescreen">
+        <div class="box">
+            <h1 class="title has-text-centered">
+                <span class="icon is-large">
+                    <i class="fas fa-wallet fa-2x"></i>
+                </span>
+            </h1>
+            <h2 class="subtitle has-text-centered">Connexion à Cash Stuffing</h2>
+            
+            <form method="POST" action="/api/auth/login" id="loginForm">
+                <div class="field">
+                    <label class="label">Email</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="email" name="email" placeholder="votre@email.com" required autofocus>
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Mot de passe</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="password" name="password" placeholder="••••••••" required>
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" name="remember">
+                        Se souvenir de moi
+                    </label>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary is-fullwidth" type="submit">
+                            <span class="icon">
+                                <i class="fas fa-sign-in-alt"></i>
+                            </span>
+                            <span>Se connecter</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <hr>
+
+            <p class="has-text-centered">
+                <a href="/auth/register">Créer un compte</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = {
+        email: formData.get('email'),
+        password: formData.get('password')
+    };
+    
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            localStorage.setItem('access_token', result.access_token);
+            localStorage.setItem('refresh_token', result.refresh_token);
+            window.location.href = '/dashboard';
+        } else {
+            const error = await response.json();
+            alert('Erreur: ' + (error.detail || 'Échec de la connexion'));
+        }
+    } catch (error) {
+        alert('Erreur de connexion au serveur');
+    }
+});
+</script>
+{% endblock %}

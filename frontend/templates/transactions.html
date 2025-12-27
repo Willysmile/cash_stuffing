@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - Cash Stuffing{% endblock %}
+
+{% block content %}
+<section class="hero is-primary">
+    <div class="hero-body">
+        <p class="title">Transactions</p>
+        <p class="subtitle">Gérez toutes vos transactions</p>
+    </div>
+</section>
+
+<div class="section">
+    <div class="columns">
+        <div class="column is-3">
+            <!-- Filtres -->
+            <div class="box">
+                <h2 class="title is-5">Filtres</h2>
+                
+                <div class="field">
+                    <label class="label">Type</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="filterType">
+                                <option value="">Tous</option>
+                                <option value="income">Revenus</option>
+                                <option value="expense">Dépenses</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Date de début</label>
+                    <div class="control">
+                        <input class="input" type="date" id="filterDateFrom">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Date de fin</label>
+                    <div class="control">
+                        <input class="input" type="date" id="filterDateTo">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Catégorie</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="filterCategory">
+                                <option value="">Toutes</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Compte</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="filterAccount">
+                                <option value="">Tous</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary is-fullwidth" onclick="applyFilters()">
+                            <span class="icon"><i class="fas fa-filter"></i></span>
+                            <span>Appliquer</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-light is-fullwidth" onclick="resetFilters()">
+                            <span class="icon"><i class="fas fa-redo"></i></span>
+                            <span>Réinitialiser</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="column is-9">
+            <!-- En-tête avec bouton d'ajout -->
+            <div class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <div class="field has-addons">
+                            <div class="control has-icons-left">
+                                <input class="input" type="text" id="searchInput" placeholder="Rechercher...">
+                                <span class="icon is-left">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <div class="level-item">
+                        <button class="button is-success" onclick="showAddModal()">
+                            <span class="icon"><i class="fas fa-plus"></i></span>
+                            <span>Nouvelle transaction</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des transactions -->
+            <div class="box">
+                <div id="transactionsList">
+                    <div class="has-text-centered">
+                        <span class="icon is-large">
+                            <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                        </span>
+                        <p>Chargement...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'ajout/édition -->
+<div class="modal" id="transactionModal">
+    <div class="modal-background" onclick="closeModal()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title" id="modalTitle">Nouvelle transaction</p>
+            <button class="delete" onclick="closeModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <form id="transactionForm">
+                <input type="hidden" id="transactionId">
+                
+                <div class="field">
+                    <label class="label">Type *</label>
+                    <div class="control">
+                        <label class="radio">
+                            <input type="radio" name="type" value="income" required>
+                            Revenu
+                        </label>
+                        <label class="radio">
+                            <input type="radio" name="type" value="expense" required checked>
+                            Dépense
+                        </label>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Montant * (€)</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="number" step="0.01" min="0.01" name="amount" required>
+                        <span class="icon is-left">
+                            <i class="fas fa-euro-sign"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Date *</label>
+                    <div class="control">
+                        <input class="input" type="date" name="date" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Compte bancaire *</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select name="bank_account_id" id="modalAccountSelect" required>
+                                <option value="">Sélectionnez un compte</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Catégorie *</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select name="category_id" id="modalCategorySelect" required>
+                                <option value="">Sélectionnez une catégorie</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Enveloppe (optionnel)</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select name="envelope_id" id="modalEnvelopeSelect">
+                                <option value="">Aucune</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Description</label>
+                    <div class="control">
+                        <textarea class="textarea" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+            </form>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-success" onclick="saveTransaction()">Enregistrer</button>
+            <button class="button" onclick="closeModal()">Annuler</button>
+        </footer>
+    </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+const token = localStorage.getItem('access_token');
+const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+let transactions = [];
+let categories = [];
+let accounts = [];
+let envelopes = [];
+
+// Chargement initial
+async function init() {
+    await Promise.all([
+        loadTransactions(),
+        loadCategories(),
+        loadAccounts(),
+        loadEnvelopes()
+    ]);
+    
+    // Set date d'aujourd'hui par défaut
+    document.querySelector('[name="date"]').value = new Date().toISOString().split('T')[0];
+}
+
+async function loadTransactions() {
+    const response = await fetch(`${API_BASE}/transactions`, { headers });
+    if (response.ok) {
+        transactions = await response.json();
+        displayTransactions(transactions);
+    }
+}
+
+async function loadCategories() {
+    const response = await fetch(`${API_BASE}/categories`, { headers });
+    if (response.ok) {
+        categories = await response.json();
+        populateSelect('filterCategory', categories);
+        populateSelect('modalCategorySelect', categories);
+    }
+}
+
+async function loadAccounts() {
+    const response = await fetch(`${API_BASE}/bank_accounts`, { headers });
+    if (response.ok) {
+        accounts = await response.json();
+        populateSelect('filterAccount', accounts);
+        populateSelect('modalAccountSelect', accounts);
+    }
+}
+
+async function loadEnvelopes() {
+    const response = await fetch(`${API_BASE}/envelopes`, { headers });
+    if (response.ok) {
+        envelopes = await response.json();
+        populateSelect('modalEnvelopeSelect', envelopes);
+    }
+}
+
+function populateSelect(selectId, items) {
+    const select = document.getElementById(selectId);
+    const isFilter = selectId.startsWith('filter');
+    const currentOptions = select.querySelectorAll('option:not(:first-child)');
+    currentOptions.forEach(opt => opt.remove());
+    
+    items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.name;
+        select.appendChild(option);
+    });
+}
+
+function displayTransactions(data) {
+    const container = document.getElementById('transactionsList');
+    
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="has-text-centered has-text-grey">Aucune transaction</p>';
+        return;
+    }
+    
+    const html = `
+        <table class="table is-fullwidth is-hoverable is-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Type</th>
+                    <th>Catégorie</th>
+                    <th>Compte</th>
+                    <th class="has-text-right">Montant</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map(t => `
+                    <tr>
+                        <td>${new Date(t.date).toLocaleDateString('fr-FR')}</td>
+                        <td>${t.description || '-'}</td>
+                        <td>
+                            <span class="tag ${t.type === 'income' ? 'is-success' : 'is-danger'}">
+                                ${t.type === 'income' ? 'Revenu' : 'Dépense'}
+                            </span>
+                        </td>
+                        <td>${t.category?.name || '-'}</td>
+                        <td>${t.bank_account?.name || '-'}</td>
+                        <td class="has-text-right ${t.type === 'income' ? 'has-text-success' : 'has-text-danger'}">
+                            ${t.type === 'income' ? '+' : '-'}${parseFloat(t.amount).toFixed(2)} €
+                        </td>
+                        <td>
+                            <div class="buttons are-small">
+                                <button class="button is-info is-light" onclick="editTransaction(${t.id})">
+                                    <span class="icon"><i class="fas fa-edit"></i></span>
+                                </button>
+                                <button class="button is-danger is-light" onclick="deleteTransaction(${t.id})">
+                                    <span class="icon"><i class="fas fa-trash"></i></span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    
+    container.innerHTML = html;
+}
+
+function showAddModal() {
+    document.getElementById('modalTitle').textContent = 'Nouvelle transaction';
+    document.getElementById('transactionForm').reset();
+    document.getElementById('transactionId').value = '';
+    document.querySelector('[name="date"]').value = new Date().toISOString().split('T')[0];
+    document.getElementById('transactionModal').classList.add('is-active');
+}
+
+async function editTransaction(id) {
+    const transaction = transactions.find(t => t.id === id);
+    if (!transaction) return;
+    
+    document.getElementById('modalTitle').textContent = 'Modifier la transaction';
+    document.getElementById('transactionId').value = transaction.id;
+    document.querySelector('[name="type"][value="' + transaction.type + '"]').checked = true;
+    document.querySelector('[name="amount"]').value = transaction.amount;
+    document.querySelector('[name="date"]').value = transaction.date;
+    document.querySelector('[name="bank_account_id"]').value = transaction.bank_account_id;
+    document.querySelector('[name="category_id"]').value = transaction.category_id;
+    document.querySelector('[name="envelope_id"]').value = transaction.envelope_id || '';
+    document.querySelector('[name="description"]').value = transaction.description || '';
+    
+    document.getElementById('transactionModal').classList.add('is-active');
+}
+
+async function saveTransaction() {
+    const form = document.getElementById('transactionForm');
+    const formData = new FormData(form);
+    const id = document.getElementById('transactionId').value;
+    
+    const data = {
+        type: formData.get('type'),
+        amount: parseFloat(formData.get('amount')),
+        date: formData.get('date'),
+        bank_account_id: parseInt(formData.get('bank_account_id')),
+        category_id: parseInt(formData.get('category_id')),
+        envelope_id: formData.get('envelope_id') ? parseInt(formData.get('envelope_id')) : null,
+        description: formData.get('description') || null
+    };
+    
+    const url = id ? `${API_BASE}/transactions/${id}` : `${API_BASE}/transactions`;
+    const method = id ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+        closeModal();
+        await loadTransactions();
+    } else {
+        const error = await response.json();
+        alert('Erreur: ' + (error.detail || 'Échec de la sauvegarde'));
+    }
+}
+
+async function deleteTransaction(id) {
+    if (!confirm('Voulez-vous vraiment supprimer cette transaction ?')) return;
+    
+    const response = await fetch(`${API_BASE}/transactions/${id}`, {
+        method: 'DELETE',
+        headers
+    });
+    
+    if (response.ok) {
+        await loadTransactions();
+    } else {
+        alert('Erreur lors de la suppression');
+    }
+}
+
+function closeModal() {
+    document.getElementById('transactionModal').classList.remove('is-active');
+}
+
+function applyFilters() {
+    let filtered = [...transactions];
+    
+    const type = document.getElementById('filterType').value;
+    const dateFrom = document.getElementById('filterDateFrom').value;
+    const dateTo = document.getElementById('filterDateTo').value;
+    const categoryId = document.getElementById('filterCategory').value;
+    const accountId = document.getElementById('filterAccount').value;
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    
+    if (type) filtered = filtered.filter(t => t.type === type);
+    if (dateFrom) filtered = filtered.filter(t => t.date >= dateFrom);
+    if (dateTo) filtered = filtered.filter(t => t.date <= dateTo);
+    if (categoryId) filtered = filtered.filter(t => t.category_id == categoryId);
+    if (accountId) filtered = filtered.filter(t => t.bank_account_id == accountId);
+    if (search) filtered = filtered.filter(t => 
+        (t.description || '').toLowerCase().includes(search) ||
+        (t.category?.name || '').toLowerCase().includes(search)
+    );
+    
+    displayTransactions(filtered);
+}
+
+function resetFilters() {
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterCategory').value = '';
+    document.getElementById('filterAccount').value = '';
+    document.getElementById('searchInput').value = '';
+    displayTransactions(transactions);
+}
+
+// Recherche en temps réel
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+});
+</script>
+{% endblock %}

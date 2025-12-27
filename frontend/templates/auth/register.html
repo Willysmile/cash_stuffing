@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Inscription - Cash Stuffing{% endblock %}
+
+{% block content %}
+<div class="columns is-centered">
+    <div class="column is-5-tablet is-4-desktop is-3-widescreen">
+        <div class="box">
+            <h1 class="title has-text-centered">
+                <span class="icon is-large">
+                    <i class="fas fa-user-plus fa-2x"></i>
+                </span>
+            </h1>
+            <h2 class="subtitle has-text-centered">Créer un compte</h2>
+            
+            <form method="POST" action="/api/auth/register" id="registerForm">
+                <div class="field">
+                    <label class="label">Nom complet</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" name="full_name" placeholder="John Doe" required autofocus>
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-user"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Email</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="email" name="email" placeholder="votre@email.com" required>
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Mot de passe</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="password" name="password" id="password" placeholder="••••••••" required minlength="8">
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                    </div>
+                    <p class="help">Minimum 8 caractères</p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Confirmer le mot de passe</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="password" name="password_confirm" id="password_confirm" placeholder="••••••••" required>
+                        <span class="icon is-small is-left">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary is-fullwidth" type="submit">
+                            <span class="icon">
+                                <i class="fas fa-user-plus"></i>
+                            </span>
+                            <span>Créer mon compte</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <hr>
+
+            <p class="has-text-centered">
+                <a href="/auth/login">Déjà un compte ? Se connecter</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const password = formData.get('password');
+    const passwordConfirm = formData.get('password_confirm');
+    
+    if (password !== passwordConfirm) {
+        alert('Les mots de passe ne correspondent pas');
+        return;
+    }
+    
+    const data = {
+        email: formData.get('email'),
+        password: password,
+        full_name: formData.get('full_name')
+    };
+    
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+            window.location.href = '/auth/login';
+        } else {
+            const error = await response.json();
+            alert('Erreur: ' + (error.detail || 'Échec de l\'inscription'));
+        }
+    } catch (error) {
+        alert('Erreur de connexion au serveur');
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}Enveloppes - Cash Stuffing{% endblock %}
+
+{% block content %}
+<section class="hero is-info">
+    <div class="hero-body">
+        <p class="title">Enveloppes budgétaires</p>
+        <p class="subtitle">Organisez vos budgets par enveloppe</p>
+    </div>
+</section>
+
+<div class="section">
+    <div class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <div class="field">
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" id="searchInput" placeholder="Rechercher...">
+                        <span class="icon is-left">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <button class="button is-success" onclick="showAddModal()">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Nouvelle enveloppe</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="columns is-multiline" id="envelopesList">
+        <div class="column is-12 has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Chargement...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'ajout/édition -->
+<div class="modal" id="envelopeModal">
+    <div class="modal-background" onclick="closeModal()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title" id="modalTitle">Nouvelle enveloppe</p>
+            <button class="delete" onclick="closeModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <form id="envelopeForm">
+                <input type="hidden" id="envelopeId">
+                
+                <div class="field">
+                    <label class="label">Nom *</label>
+                    <div class="control">
+                        <input class="input" type="text" name="name" required>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Compte bancaire *</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select name="bank_account_id" id="modalAccountSelect" required>
+                                <option value="">Sélectionnez un compte</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Catégorie *</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select name="category_id" id="modalCategorySelect" required>
+                                <option value="">Sélectionnez une catégorie</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Budget alloué (€)</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="number" step="0.01" min="0" name="allocated_budget" value="0">
+                        <span class="icon is-left">
+                            <i class="fas fa-euro-sign"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Description</label>
+                    <div class="control">
+                        <textarea class="textarea" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+            </form>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-success" onclick="saveEnvelope()">Enregistrer</button>
+            <button class="button" onclick="closeModal()">Annuler</button>
+        </footer>
+    </div>
+</div>
+
+<!-- Modal de réallocation -->
+<div class="modal" id="reallocateModal">
+    <div class="modal-background" onclick="closeReallocateModal()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Réallouer des fonds</p>
+            <button class="delete" onclick="closeReallocateModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <form id="reallocateForm">
+                <input type="hidden" id="fromEnvelopeId">
+                
+                <div class="field">
+                    <label class="label">De : <span id="fromEnvelopeName"></span></label>
+                    <p class="help">Budget disponible : <strong id="fromEnvelopeBudget">0 €</strong></p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Vers l'enveloppe</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="toEnvelopeSelect" required>
+                                <option value="">Sélectionnez une enveloppe</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Montant (€)</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="number" step="0.01" min="0.01" id="reallocateAmount" required>
+                        <span class="icon is-left">
+                            <i class="fas fa-euro-sign"></i>
+                        </span>
+                    </div>
+                </div>
+            </form>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-primary" onclick="reallocateFunds()">Transférer</button>
+            <button class="button" onclick="closeReallocateModal()">Annuler</button>
+        </footer>
+    </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+const token = localStorage.getItem('access_token');
+const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+let envelopes = [];
+let categories = [];
+let accounts = [];
+
+async function init() {
+    await Promise.all([
+        loadEnvelopes(),
+        loadCategories(),
+        loadAccounts()
+    ]);
+}
+
+async function loadEnvelopes() {
+    const response = await fetch(`${API_BASE}/envelopes`, { headers });
+    if (response.ok) {
+        envelopes = await response.json();
+        displayEnvelopes(envelopes);
+    }
+}
+
+async function loadCategories() {
+    const response = await fetch(`${API_BASE}/categories`, { headers });
+    if (response.ok) {
+        categories = await response.json();
+        populateSelect('modalCategorySelect', categories);
+    }
+}
+
+async function loadAccounts() {
+    const response = await fetch(`${API_BASE}/bank_accounts`, { headers });
+    if (response.ok) {
+        accounts = await response.json();
+        populateSelect('modalAccountSelect', accounts);
+    }
+}
+
+function populateSelect(selectId, items) {
+    const select = document.getElementById(selectId);
+    const currentOptions = select.querySelectorAll('option:not(:first-child)');
+    currentOptions.forEach(opt => opt.remove());
+    
+    items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.name;
+        select.appendChild(option);
+    });
+}
+
+function displayEnvelopes(data) {
+    const container = document.getElementById('envelopesList');
+    
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="column is-12"><p class="has-text-centered has-text-grey">Aucune enveloppe</p></div>';
+        return;
+    }
+    
+    const html = data.map(e => {
+        const budget = parseFloat(e.allocated_budget || 0);
+        const spent = parseFloat(e.current_balance || 0);
+        const percentage = budget > 0 ? (spent / budget) * 100 : 0;
+        const colorClass = percentage > 90 ? 'is-danger' : percentage > 70 ? 'is-warning' : 'is-success';
+        
+        return `
+            <div class="column is-4">
+                <div class="card">
+                    <header class="card-header ${colorClass}">
+                        <p class="card-header-title has-text-white">
+                            <span class="icon">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                            <span>${e.name}</span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <p><strong>Catégorie:</strong> ${e.category?.name || '-'}</p>
+                            <p><strong>Compte:</strong> ${e.bank_account?.name || '-'}</p>
+                            ${e.description ? `<p>${e.description}</p>` : ''}
+                            
+                            <div class="field">
+                                <label class="label is-small">Utilisation</label>
+                                <progress class="progress ${colorClass}" value="${percentage}" max="100">${percentage.toFixed(0)}%</progress>
+                            </div>
+                            
+                            <div class="level is-mobile">
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Budget</p>
+                                        <p class="title is-6">${budget.toFixed(2)} €</p>
+                                    </div>
+                                </div>
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Dépensé</p>
+                                        <p class="title is-6">${spent.toFixed(2)} €</p>
+                                    </div>
+                                </div>
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Restant</p>
+                                        <p class="title is-6">${(budget - spent).toFixed(2)} €</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="card-footer">
+                        <a class="card-footer-item" onclick="editEnvelope(${e.id})">
+                            <span class="icon"><i class="fas fa-edit"></i></span>
+                            <span>Modifier</span>
+                        </a>
+                        <a class="card-footer-item" onclick="showReallocateModal(${e.id})">
+                            <span class="icon"><i class="fas fa-exchange-alt"></i></span>
+                            <span>Réallouer</span>
+                        </a>
+                        <a class="card-footer-item has-text-danger" onclick="deleteEnvelope(${e.id})">
+                            <span class="icon"><i class="fas fa-trash"></i></span>
+                            <span>Supprimer</span>
+                        </a>
+                    </footer>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+}
+
+function showAddModal() {
+    document.getElementById('modalTitle').textContent = 'Nouvelle enveloppe';
+    document.getElementById('envelopeForm').reset();
+    document.getElementById('envelopeId').value = '';
+    document.getElementById('envelopeModal').classList.add('is-active');
+}
+
+async function editEnvelope(id) {
+    const envelope = envelopes.find(e => e.id === id);
+    if (!envelope) return;
+    
+    document.getElementById('modalTitle').textContent = 'Modifier l\'enveloppe';
+    document.getElementById('envelopeId').value = envelope.id;
+    document.querySelector('[name="name"]').value = envelope.name;
+    document.querySelector('[name="bank_account_id"]').value = envelope.bank_account_id;
+    document.querySelector('[name="category_id"]').value = envelope.category_id;
+    document.querySelector('[name="allocated_budget"]').value = envelope.allocated_budget || 0;
+    document.querySelector('[name="description"]').value = envelope.description || '';
+    
+    document.getElementById('envelopeModal').classList.add('is-active');
+}
+
+async function saveEnvelope() {
+    const form = document.getElementById('envelopeForm');
+    const formData = new FormData(form);
+    const id = document.getElementById('envelopeId').value;
+    
+    const data = {
+        name: formData.get('name'),
+        bank_account_id: parseInt(formData.get('bank_account_id')),
+        category_id: parseInt(formData.get('category_id')),
+        allocated_budget: parseFloat(formData.get('allocated_budget')) || 0,
+        description: formData.get('description') || null
+    };
+    
+    const url = id ? `${API_BASE}/envelopes/${id}` : `${API_BASE}/envelopes`;
+    const method = id ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+        closeModal();
+        await loadEnvelopes();
+    } else {
+        const error = await response.json();
+        alert('Erreur: ' + (error.detail || 'Échec de la sauvegarde'));
+    }
+}
+
+async function deleteEnvelope(id) {
+    if (!confirm('Voulez-vous vraiment supprimer cette enveloppe ?')) return;
+    
+    const response = await fetch(`${API_BASE}/envelopes/${id}`, {
+        method: 'DELETE',
+        headers
+    });
+    
+    if (response.ok) {
+        await loadEnvelopes();
+    } else {
+        alert('Erreur lors de la suppression');
+    }
+}
+
+function showReallocateModal(fromId) {
+    const envelope = envelopes.find(e => e.id === fromId);
+    if (!envelope) return;
+    
+    document.getElementById('fromEnvelopeId').value = fromId;
+    document.getElementById('fromEnvelopeName').textContent = envelope.name;
+    document.getElementById('fromEnvelopeBudget').textContent = `${parseFloat(envelope.current_balance || 0).toFixed(2)} €`;
+    
+    // Peupler la liste des enveloppes destinations (exclure celle de départ)
+    const toSelect = document.getElementById('toEnvelopeSelect');
+    toSelect.innerHTML = '<option value="">Sélectionnez une enveloppe</option>';
+    envelopes.filter(e => e.id !== fromId).forEach(e => {
+        const option = document.createElement('option');
+        option.value = e.id;
+        option.textContent = e.name;
+        toSelect.appendChild(option);
+    });
+    
+    document.getElementById('reallocateModal').classList.add('is-active');
+}
+
+async function reallocateFunds() {
+    const fromId = document.getElementById('fromEnvelopeId').value;
+    const toId = document.getElementById('toEnvelopeSelect').value;
+    const amount = parseFloat(document.getElementById('reallocateAmount').value);
+    
+    if (!toId || !amount) {
+        alert('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    const response = await fetch(`${API_BASE}/envelopes/${fromId}/reallocate`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+            to_envelope_id: parseInt(toId),
+            amount: amount
+        })
+    });
+    
+    if (response.ok) {
+        closeReallocateModal();
+        await loadEnvelopes();
+    } else {
+        const error = await response.json();
+        alert('Erreur: ' + (error.detail || 'Échec de la réallocation'));
+    }
+}
+
+function closeModal() {
+    document.getElementById('envelopeModal').classList.remove('is-active');
+}
+
+function closeReallocateModal() {
+    document.getElementById('reallocateModal').classList.remove('is-active');
+    document.getElementById('reallocateForm').reset();
+}
+
+// Recherche
+document.addEventListener('DOMContentLoaded', () => {
+    init();
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const search = e.target.value.toLowerCase();
+        const filtered = search ? envelopes.filter(env =>
+            env.name.toLowerCase().includes(search) ||
+            (env.description || '').toLowerCase().includes(search)
+        ) : envelopes;
+        displayEnvelopes(filtered);
+    });
+});
+</script>
+{% endblock %}

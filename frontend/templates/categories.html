@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Catégories - Cash Stuffing{% endblock %}
+
+{% block content %}
+<section class="hero is-warning">
+    <div class="hero-body">
+        <p class="title">Catégories</p>
+        <p class="subtitle">Organisez vos dépenses et revenus</p>
+    </div>
+</section>
+
+<div class="section">
+    <div class="level">
+        <div class="level-left"></div>
+        <div class="level-right">
+            <div class="level-item">
+                <button class="button is-warning" onclick="showAddModal()">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Nouvelle catégorie</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="columns">
+        <div class="column">
+            <div class="box">
+                <h2 class="title is-5">
+                    <span class="icon has-text-success">
+                        <i class="fas fa-arrow-up"></i>
+                    </span>
+                    Catégories de revenus
+                </h2>
+                <div id="incomeCategories">
+                    <p class="has-text-centered">Chargement...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="column">
+            <div class="box">
+                <h2 class="title is-5">
+                    <span class="icon has-text-danger">
+                        <i class="fas fa-arrow-down"></i>
+                    </span>
+                    Catégories de dépenses
+                </h2>
+                <div id="expenseCategories">
+                    <p class="has-text-centered">Chargement...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'ajout/édition -->
+<div class="modal" id="categoryModal">
+    <div class="modal-background" onclick="closeModal()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title" id="modalTitle">Nouvelle catégorie</p>
+            <button class="delete" onclick="closeModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <form id="categoryForm">
+                <input type="hidden" id="categoryId">
+                
+                <div class="field">
+                    <label class="label">Nom de la catégorie *</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" name="name" placeholder="Alimentation" required>
+                        <span class="icon is-left">
+                            <i class="fas fa-tag"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Icône (classe Font Awesome)</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" name="icon" placeholder="fa-shopping-cart">
+                        <span class="icon is-left">
+                            <i class="fas fa-icons"></i>
+                        </span>
+                    </div>
+                    <p class="help">Ex: fa-shopping-cart, fa-home, fa-car (voir <a href="https://fontawesome.com/icons" target="_blank">fontawesome.com</a>)</p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Couleur</label>
+                    <div class="control">
+                        <input class="input" type="color" name="color" value="#3273dc">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Description</label>
+                    <div class="control">
+                        <textarea class="textarea" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+            </form>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-warning" onclick="saveCategory()">Enregistrer</button>
+            <button class="button" onclick="closeModal()">Annuler</button>
+        </footer>
+    </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+const token = localStorage.getItem('access_token');
+const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+let categories = [];
+
+async function loadCategories() {
+    const response = await fetch(`${API_BASE}/categories`, { headers });
+    if (response.ok) {
+        categories = await response.json();
+        displayCategories();
+    }
+}
+
+function displayCategories() {
+    const incomeContainer = document.getElementById('incomeCategories');
+    const expenseContainer = document.getElementById('expenseCategories');
+    
+    const income = categories.filter(c => !c.description || !c.description.includes('expense'));
+    const expense = categories.filter(c => c.description && c.description.includes('expense'));
+    
+    incomeContainer.innerHTML = renderCategoryList(categories);
+    expenseContainer.innerHTML = renderCategoryList(categories);
+}
+
+function renderCategoryList(data) {
+    if (!data || data.length === 0) {
+        return '<p class="has-text-centered has-text-grey">Aucune catégorie</p>';
+    }
+    
+    return `
+        <table class="table is-fullwidth is-hoverable">
+            <tbody>
+                ${data.map(c => `
+                    <tr>
+                        <td style="width: 40px;">
+                            <span class="icon" style="color: ${c.color || '#3273dc'}">
+                                <i class="fas ${c.icon || 'fa-tag'}"></i>
+                            </span>
+                        </td>
+                        <td>
+                            <strong>${c.name}</strong>
+                            ${c.description ? `<br><small class="has-text-grey">${c.description}</small>` : ''}
+                        </td>
+                        <td style="width: 100px;">
+                            <div class="buttons are-small">
+                                <button class="button is-info is-light" onclick="editCategory(${c.id})">
+                                    <span class="icon"><i class="fas fa-edit"></i></span>
+                                </button>
+                                <button class="button is-danger is-light" onclick="deleteCategory(${c.id})">
+                                    <span class="icon"><i class="fas fa-trash"></i></span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+
+function showAddModal() {
+    document.getElementById('modalTitle').textContent = 'Nouvelle catégorie';
+    document.getElementById('categoryForm').reset();
+    document.getElementById('categoryId').value = '';
+    document.querySelector('[name="color"]').value = '#3273dc';
+    document.getElementById('categoryModal').classList.add('is-active');
+}
+
+async function editCategory(id) {
+    const category = categories.find(c => c.id === id);
+    if (!category) return;
+    
+    document.getElementById('modalTitle').textContent = 'Modifier la catégorie';
+    document.getElementById('categoryId').value = category.id;
+    document.querySelector('[name="name"]').value = category.name;
+    document.querySelector('[name="icon"]').value = category.icon || '';
+    document.querySelector('[name="color"]').value = category.color || '#3273dc';
+    document.querySelector('[name="description"]').value = category.description || '';
+    
+    document.getElementById('categoryModal').classList.add('is-active');
+}
+
+async function saveCategory() {
+    const form = document.getElementById('categoryForm');
+    const formData = new FormData(form);
+    const id = document.getElementById('categoryId').value;
+    
+    const data = {
+        name: formData.get('name'),
+        icon: formData.get('icon') || null,
+        color: formData.get('color') || null,
+        description: formData.get('description') || null
+    };
+    
+    const url = id ? `${API_BASE}/categories/${id}` : `${API_BASE}/categories`;
+    const method = id ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+        closeModal();
+        await loadCategories();
+    } else {
+        const error = await response.json();
+        alert('Erreur: ' + (error.detail || 'Échec de la sauvegarde'));
+    }
+}
+
+async function deleteCategory(id) {
+    if (!confirm('Voulez-vous vraiment supprimer cette catégorie ? Cela affectera toutes les transactions et enveloppes associées.')) return;
+    
+    const response = await fetch(`${API_BASE}/categories/${id}`, {
+        method: 'DELETE',
+        headers
+    });
+    
+    if (response.ok) {
+        await loadCategories();
+    } else {
+        const error = await response.json();
+        alert('Erreur: ' + (error.detail || 'Impossible de supprimer cette catégorie'));
+    }
+}
+
+function closeModal() {
+    document.getElementById('categoryModal').classList.remove('is-active');
+}
+
+document.addEventListener('DOMContentLoaded', loadCategories);
+</script>
+{% endblock %}
