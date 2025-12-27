@@ -166,16 +166,43 @@ DATABASE_URL=sqlite+aiosqlite:///./cashstuffing.db
 
 ---
 
-### 🔄 Étape 3 : Migrations Alembic
+### ✅ Étape 3 : Migrations Alembic (TERMINÉ)
 **Date** : 27 décembre 2025  
-**Statut** : À faire
+**Statut** : Terminé et appliqué
 
-**Actions** :
-- [ ] Initialiser Alembic : `alembic init alembic`
-- [ ] Configurer `alembic.ini` avec le bon DATABASE_URL
-- [ ] Modifier `alembic/env.py` pour importer Base et les modèles
-- [ ] Générer la migration initiale : `alembic revision --autogenerate -m "Initial migration"`
-- [ ] Appliquer la migration : `alembic upgrade head`
+#### Configuration Alembic
+
+✅ **Fichiers créés et configurés** :
+- `backend/alembic.ini` : Configuration Alembic
+- `backend/alembic/env.py` : Script d'environnement personnalisé
+- `backend/alembic/script.py.mako` : Template de migration
+
+#### Migration initiale
+
+✅ **Migration générée** : `56ce580bbb76_initial_migration_mvp_tables.py`
+- **Date** : 27 décembre 2025 14:32
+- **Révision** : 56ce580bbb76 (head)
+
+✅ **Tables créées** :
+1. `users` : Utilisateurs avec email unique
+2. `bank_accounts` : Comptes bancaires
+3. `categories` : Catégories hiérarchiques
+4. `envelopes` : Enveloppes budgétaires
+5. `transactions` : Dépenses et revenus
+6. `wish_lists` : Listes de souhaits
+7. `wish_list_items` : Articles dans les listes
+
+#### Base de données
+
+✅ **Fichier** : `backend/cashstuffing.db` (136 Ko)
+✅ **État** : Migration appliquée avec succès (`alembic upgrade head`)
+✅ **Version** : 56ce580bbb76 (head)
+
+#### Configuration spéciale
+
+✅ **Conversion automatique** dans `env.py` :
+- `sqlite+aiosqlite://` (async pour FastAPI) → `sqlite://` (sync pour Alembic)
+- Chemin relatif → Chemin absolu (évite erreurs "unable to open database")
 
 ---
 
@@ -535,22 +562,76 @@ app.include_router(bank_accounts_router, prefix="/api")
 
 ---
 
-### Étape 8 : Routes API - Enveloppes (À faire)
-- GET `/api/envelopes` (liste avec stats)
-- POST `/api/envelopes` (création liée à bank_account)
-- GET `/api/envelopes/{id}` (détails)
-- PUT `/api/envelopes/{id}` (modification)
-- DELETE `/api/envelopes/{id}` (suppression)
-- POST `/api/envelopes/{id}/reallocate` (transfert entre enveloppes)
-
 ### Étapes 9-12 : À faire
 Routes API (Transactions, WishLists), Frontend, Tests
 
 ---
 
-**État actuel** : ✅ **Fondations + Auth + Catégories + Comptes terminées**  
+### ✅ Étape 8 : Tests unitaires (TERMINÉ)
+**Date** : 27 décembre 2025  
+**Statut** : Terminé - 43 tests ✅
+
+#### Tests créés
+
+✅ **Fichiers de test** :
+- `tests/conftest.py` : Configuration pytest et fixtures
+- `tests/test_auth.py` : Tests d'authentification (14 tests)
+- `tests/test_categories.py` : Tests catégories (17 tests)
+- `tests/test_bank_accounts.py` : Tests comptes bancaires (12 tests)
+
+#### Fixtures partagées
+
+✅ **Fixtures pytest** :
+- `db_session` : Session SQLite en mémoire par test
+- `client` : Client HTTP async avec override DB
+- `test_user` : Utilisateur de test pré-créé
+- `auth_headers` : Headers JWT pour authentification
+- `second_user` : Second utilisateur pour tests d'isolation
+
+#### Couverture des tests
+
+✅ **Authentification (14 tests)** :
+- Inscription : succès, email dupliqué, validation
+- Login : succès, mot de passe incorrect, user inactif
+- Refresh token : succès, token invalide, mauvais type
+- Current user : succès, sans token, token invalide
+
+✅ **Catégories (17 tests)** :
+- CRUD complet : create, read, update, delete
+- Hiérarchie : sous-catégories, arbre récursif
+- Filtres : parent_id, recherche par nom
+- Protection : suppression avec enfants
+- Isolation utilisateurs
+
+✅ **Comptes bancaires (12 tests)** :
+- CRUD complet
+- Ajustement solde : avec/sans raison, négatif
+- Filtres : type de compte, devise
+- Isolation utilisateurs
+
+#### Résultats
+
+✅ **43 tests passés sur 43** (100%)  
+✅ **0 warnings** (Pydantic ConfigDict corrigé)  
+✅ **Temps d'exécution** : ~18 secondes  
+✅ **Base de données** : SQLite en mémoire (isolation complète)
+
+#### Corrections appliquées
+
+🔧 **Warnings Pydantic** :
+- Remplacement `class Config` → `model_config = ConfigDict(from_attributes=True)`
+- Appliqué sur 10 schémas (Settings, UserRead, CategoryRead, etc.)
+
+🔧 **Tests corrigés** :
+- `test_login_inactive_user` : Code 403 au lieu de 401
+- `test_refresh_token_success` : Token dans header Bearer
+- `test_delete_category_with_children` : Message bilingue
+
+---
+
+**État actuel** : ✅ **Fondations + DB + Auth + Catégories + Comptes + Tests terminées**  
 **Prochaine tâche** : Implémenter les routes API pour les Enveloppes
 
 ---
 
-**Dernière mise à jour** : 27 décembre 2025 - 15:49
+**Dernière mise à jour** : 27 décembre 2025 - 16:30

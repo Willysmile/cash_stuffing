@@ -1,7 +1,7 @@
 """
 Schémas Pydantic pour WishList et WishListItem
 """
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, ConfigDict
 from datetime import date, datetime
 from typing import Optional, List
 from decimal import Decimal
@@ -69,8 +69,7 @@ class WishListRead(WishListBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # === WishListItem Schemas ===
@@ -117,8 +116,7 @@ class WishListItemRead(WishListItemBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # === Schemas avec relations ===
@@ -130,8 +128,7 @@ class WishListWithItems(WishListRead):
     purchased_cost: Decimal = Field(description="Montant déjà dépensé")
     remaining_cost: Decimal = Field(description="Montant restant à acheter")
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WishListSummary(BaseModel):

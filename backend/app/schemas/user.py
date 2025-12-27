@@ -1,7 +1,7 @@
 """
 Schémas Pydantic pour User
 """
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
 from typing import Optional
 
@@ -33,8 +33,7 @@ class UserRead(UserBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True  # Pydantic V2 (anciennement orm_mode)
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Schéma pour la connexion

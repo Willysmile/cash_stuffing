@@ -1,7 +1,7 @@
 """
 Schémas Pydantic pour Transaction
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import date, datetime
 from typing import Optional
 from decimal import Decimal
@@ -68,8 +68,7 @@ class TransactionRead(TransactionBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Schéma avec relations expanded
