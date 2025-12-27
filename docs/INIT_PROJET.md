@@ -475,6 +475,67 @@ INFO:     Application startup complete.
 - Documentation alternative: http://127.0.0.1:8001/redoc
 - Health check: http://127.0.0.1:8001/health
 
+### 17. Configuration Git et GitHub
+
+**Installation de Git:**
+```bash
+sudo apt install git -y
+# Version installée: Git 2.39.5
+```
+
+**Configuration globale:**
+```bash
+git config --global user.name "Willy"
+git config --global user.email "willy@cashstuffing.local"
+git config --global init.defaultBranch main
+```
+
+**Initialisation du dépôt local:**
+```bash
+git init
+git add .
+git commit -m "🎉 Initial commit - Cash Stuffing MVP"
+```
+
+**Résultat du commit initial:**
+```
+[main (commit racine) 940c980] 🎉 Initial commit - Cash Stuffing MVP
+ 21 files changed, 3093 insertions(+)
+```
+
+**Configuration SSH pour GitHub:**
+```bash
+# Génération de la clé SSH
+ssh-keygen -t ed25519 -C "willy@cashstuffing.local" -f ~/.ssh/id_ed25519 -N ""
+
+# Clé publique générée
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGNgozUtRqVR+iE/dOu2qNKcvugw+/RfrsjGqYYxyRJx
+
+# Ajout de la clé publique sur GitHub: Settings > SSH and GPG keys
+# Test de connexion
+ssh -T git@github.com
+# Résultat: Hi Willysmile/cash_stuffing! You've successfully authenticated
+```
+
+**Connexion au dépôt GitHub:**
+```bash
+git remote add origin git@github.com:Willysmile/cash_stuffing.git
+git push -u origin main
+```
+
+**Résultat du push:**
+```
+Écriture des objets: 100% (37/37), 34.92 Kio
+To github.com:Willysmile/cash_stuffing.git
+ * [new branch]      main -> main
+```
+
+**Dépôt GitHub configuré:**
+- 🔗 URL: https://github.com/Willysmile/cash_stuffing
+- ✅ Branche principale: `main`
+- ✅ 21 fichiers
+- ✅ 3093 lignes de code
+
 ---
 
 ## 📚 Documents de référence créés
@@ -594,6 +655,25 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 # - Documentation alternative: http://localhost:8000/redoc
 ```
 
+### Git & GitHub
+
+```bash
+# Vérifier le statut
+git status
+
+# Ajouter des modifications
+git add .
+
+# Créer un commit
+git commit -m "Description des changements"
+
+# Pousser vers GitHub
+git push
+
+# Récupérer les modifications
+git pull
+```
+
 ### Base de données
 
 ```bash
@@ -643,6 +723,9 @@ pytest tests/test_auth.py -v
 - [x] Toutes les dépendances installées (40+ packages)
 - [x] Variables d'environnement (.env avec SECRET_KEY sécurisée)
 - [x] Serveur FastAPI testé et opérationnel
+- [x] Git installé et configuré (version 2.39.5)
+- [x] Clé SSH générée et ajoutée à GitHub
+- [x] Dépôt GitHub créé et premier push effectué
 
 ### 🔄 En attente
 
