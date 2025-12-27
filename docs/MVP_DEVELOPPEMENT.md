@@ -446,22 +446,111 @@ app.include_router(categories_router, prefix="/api")
 
 ---
 
-### Étape 7 : Routes API - Comptes Bancaires (À faire)
-- GET `/api/bank-accounts` (liste)
-- POST `/api/bank-accounts` (création avec initial_balance)
-- GET `/api/bank-accounts/{id}` (détails)
-- PUT `/api/bank-accounts/{id}` (modification)
-- DELETE `/api/bank-accounts/{id}` (suppression)
-- POST `/api/bank-accounts/{id}/adjust` (ajustement manuel solde)
+### ✅ Étape 7 : Routes API - Comptes Bancaires (TERMINÉ)
+**Date** : 27 décembre 2025  
+**Statut** : Terminé et testé
 
-### Étapes 8-12 : À faire
-Routes API (Envelopes, Transactions, WishLists), Frontend, Tests
+#### Implémentation CRUD + Ajustement solde
+
+✅ **Routes créées** (`backend/app/routes/bank_accounts.py`) :
+
+**GET `/api/bank-accounts`**
+- Liste tous les comptes de l'utilisateur
+- Filtres : `account_type` (checking, savings, etc.), `currency` (EUR, USD, etc.)
+- Tri automatique par `name`
+- Protection JWT
+
+**GET `/api/bank-accounts/{id}`**
+- Détails d'un compte spécifique
+- Vérification propriétaire (user_id)
+- 404 si non trouvé
+
+**POST `/api/bank-accounts`**
+- Création nouveau compte
+- Champs : `name` (requis), `account_type`, `initial_balance`, `currency`
+- `current_balance` automatiquement initialisé à `initial_balance`
+- Retourne 201 Created
+
+**PUT `/api/bank-accounts/{id}`**
+- Modification compte existant
+- Champs modifiables : `name`, `account_type`, `currency`
+- **Note** : Les soldes ne peuvent pas être modifiés via PUT
+
+**POST `/api/bank-accounts/{id}/adjust`**
+- Ajustement manuel du solde
+- Paramètres : `new_balance` (requis), `reason` (optionnel)
+- Modifie `current_balance` directement
+- `initial_balance` reste inchangé
+- Logs l'ajustement (old balance → new balance + raison)
+
+**DELETE `/api/bank-accounts/{id}`**
+- Suppression compte
+- Échoue si enveloppes liées (contrainte FK)
+- Échoue si transactions liées (contrainte FK)
+- Retourne 204 No Content si succès
+
+#### Intégration
+
+✅ **Router intégré** dans `backend/app/main.py` :
+```python
+app.include_router(bank_accounts_router, prefix="/api")
+```
+
+✅ **Export** dans `backend/app/routes/__init__.py`
+
+#### Tests manuels réussis
+
+✅ **13 tests effectués avec succès** :
+
+1. ✅ Création compte courant (1500.00 EUR, checking)
+2. ✅ Création livret épargne (5000.00 EUR, savings)
+3. ✅ Création compte devise étrangère (200.00 USD, checking)
+4. ✅ Liste tous les comptes (3 résultats, tri par nom)
+5. ✅ Filtre par type "savings" (retourne Livret A)
+6. ✅ Filtre par devise "USD" (retourne Compte USD)
+7. ✅ Récupération compte spécifique (GET /1)
+8. ✅ Modification nom compte ("Compte Courant" → "Compte Principal")
+9. ✅ Ajustement solde (1500.00 → 1523.45 avec raison)
+10. ✅ Vérification `initial_balance` inchangé (1500.00)
+11. ✅ Vérification `current_balance` modifié (1523.45)
+12. ✅ Suppression compte USD réussie (204)
+13. ✅ Liste finale (2 comptes EUR restants)
+
+#### Fonctionnalités
+
+✅ Protection JWT sur toutes les routes (Depends(get_current_user))  
+✅ Isolation par utilisateur (user_id automatique)  
+✅ Initialisation automatique current_balance = initial_balance  
+✅ Ajustement manuel solde avec raison (logs)  
+✅ Filtres multiples (type + devise)  
+✅ Protection intégrité (impossible supprimer si relations)  
+✅ Séparation initial_balance (historique) / current_balance (actuel)
+
+#### Architecture
+
+- `initial_balance` : Solde de départ (historique, jamais modifié)
+- `current_balance` : Solde actuel (modifié par transactions et ajustements)
+- Ajustements loggés pour traçabilité
+- Préparation pour calcul automatique par transactions (Étape 9)
 
 ---
 
-**État actuel** : ✅ **Fondations + Validation + Auth + Catégories terminées**  
-**Prochaine tâche** : Implémenter les routes API pour les Comptes Bancaires
+### Étape 8 : Routes API - Enveloppes (À faire)
+- GET `/api/envelopes` (liste avec stats)
+- POST `/api/envelopes` (création liée à bank_account)
+- GET `/api/envelopes/{id}` (détails)
+- PUT `/api/envelopes/{id}` (modification)
+- DELETE `/api/envelopes/{id}` (suppression)
+- POST `/api/envelopes/{id}/reallocate` (transfert entre enveloppes)
+
+### Étapes 9-12 : À faire
+Routes API (Transactions, WishLists), Frontend, Tests
 
 ---
 
-**Dernière mise à jour** : 27 décembre 2025 - 15:44
+**État actuel** : ✅ **Fondations + Auth + Catégories + Comptes terminées**  
+**Prochaine tâche** : Implémenter les routes API pour les Enveloppes
+
+---
+
+**Dernière mise à jour** : 27 décembre 2025 - 15:49
