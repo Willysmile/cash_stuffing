@@ -358,22 +358,110 @@ app.include_router(auth_router, prefix="/api")
 
 ---
 
-### Étape 6 : Routes API - Catégories (À faire)
-- GET `/api/categories` (liste avec filtres)
-- POST `/api/categories` (création)
-- GET `/api/categories/{id}` (détails)
-- PUT `/api/categories/{id}` (modification)
-- DELETE `/api/categories/{id}` (suppression)
-- Protection JWT sur toutes les routes
+### ✅ Étape 6 : Routes API - Catégories (TERMINÉ)
+**Date** : 27 décembre 2025  
+**Statut** : Terminé et testé
 
-### Étapes 7-12 : À faire
-Routes API (BankAccounts, Envelopes, Transactions, WishLists), Frontend, Tests
+#### Implémentation CRUD complète
+
+✅ **Routes créées** (`backend/app/routes/categories.py`) :
+
+**GET `/api/categories`**
+- Liste toutes les catégories de l'utilisateur
+- Filtres : `parent_id` (enfants d'une catégorie), `search` (recherche par nom)
+- Tri automatique par `sort_order` puis `name`
+- Protection JWT (requiert Bearer token)
+
+**GET `/api/categories/tree`**
+- Arbre hiérarchique complet
+- Catégories racines avec enfants imbriqués récursifs
+- Construction manuelle pour éviter lazy loading SQLAlchemy
+- Format : `CategoryWithChildren` avec relation `children`
+
+**GET `/api/categories/{id}`**
+- Détails d'une catégorie spécifique
+- Vérification propriétaire (user_id)
+- 404 si non trouvée
+
+**POST `/api/categories`**
+- Création nouvelle catégorie
+- Champs : `name` (requis), `parent_id`, `color`, `icon`, `sort_order`
+- Validation parent existe et appartient à l'user
+- Retourne 201 Created
+
+**PUT `/api/categories/{id}`**
+- Modification catégorie existante
+- Tous champs modifiables
+- Protection contre boucle infinie (parent = self)
+- Validation parent existe
+
+**DELETE `/api/categories/{id}`**
+- Suppression catégorie
+- Échoue si sous-catégories existent (400 Bad Request)
+- Échoue si enveloppes liées (contrainte FK)
+- Retourne 204 No Content si succès
+
+#### Intégration
+
+✅ **Router intégré** dans `backend/app/main.py` :
+```python
+app.include_router(categories_router, prefix="/api")
+```
+
+✅ **Export** dans `backend/app/routes/__init__.py`
+
+#### Tests manuels réussis
+
+✅ **13 tests effectués avec succès** :
+
+1. ✅ Création catégorie racine "Alimentation" (#FF5733, shopping-cart)
+2. ✅ Création sous-catégorie "Courses" (parent_id=1)
+3. ✅ Création autre catégorie racine "Loisirs" (#33C3FF, game)
+4. ✅ Liste toutes les catégories (3 résultats)
+5. ✅ Arbre hiérarchique (Alimentation > Courses, Loisirs)
+6. ✅ Modification catégorie (couleur + icône)
+7. ✅ Récupération catégorie spécifique (GET /1)
+8. ✅ Filtre par parent_id=1 (retourne Courses)
+9. ✅ Recherche par nom "cours" (insensible à la casse)
+10. ✅ Suppression refusée si sous-catégories (400 Bad Request)
+11. ✅ Suppression sous-catégorie réussie (204)
+12. ✅ Vérification suppression (2 catégories restantes)
+13. ✅ Protection JWT sur toutes les routes (401 sans token)
+
+#### Problèmes résolus
+
+🔧 **Problème** : ValidationError lors de la construction de l'arbre hiérarchique
+- **Cause** : Accès aux relations SQLAlchemy en mode lazy loading avec async
+- **Solution** : Construction manuelle de l'arbre avec dictionnaires (évite accès relation `children`)
+
+#### Fonctionnalités
+
+✅ Protection JWT sur toutes les routes (Depends(get_current_user))  
+✅ Isolation par utilisateur (user_id automatique)  
+✅ Validation parent existe et appartient à l'user  
+✅ Protection contre boucles infinies (parent = self)  
+✅ Protection intégrité (impossible supprimer si enfants)  
+✅ Filtres avancés (parent_id, recherche insensible casse)  
+✅ Arbre hiérarchique récursif complet
 
 ---
 
-**État actuel** : ✅ **Fondations + Validation + Authentification terminées**  
-**Prochaine tâche** : Implémenter les routes API pour les Catégories
+### Étape 7 : Routes API - Comptes Bancaires (À faire)
+- GET `/api/bank-accounts` (liste)
+- POST `/api/bank-accounts` (création avec initial_balance)
+- GET `/api/bank-accounts/{id}` (détails)
+- PUT `/api/bank-accounts/{id}` (modification)
+- DELETE `/api/bank-accounts/{id}` (suppression)
+- POST `/api/bank-accounts/{id}/adjust` (ajustement manuel solde)
+
+### Étapes 8-12 : À faire
+Routes API (Envelopes, Transactions, WishLists), Frontend, Tests
 
 ---
 
-**Dernière mise à jour** : 27 décembre 2025 - 15:33
+**État actuel** : ✅ **Fondations + Validation + Auth + Catégories terminées**  
+**Prochaine tâche** : Implémenter les routes API pour les Comptes Bancaires
+
+---
+
+**Dernière mise à jour** : 27 décembre 2025 - 15:44
