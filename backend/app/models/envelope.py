@@ -42,6 +42,4 @@ class Envelope(Base):
     user = relationship("User", back_populates="envelopes")
     bank_account = relationship("BankAccount", back_populates="envelopes")
     category = relationship("Category", back_populates="envelopes")
-    
-    def __repr__(self):
-        return f"<Envelope(id={self.id}, name='{self.name}', target={self.target_amount}, balance={self.current_balance})>"
+    history = relationship("EnvelopeHistory", back_populates="envelope", cascade="all, delete-orphan")

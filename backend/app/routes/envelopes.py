@@ -10,9 +10,10 @@ from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from decimal import Decimal
 from pathlib import Path
+from pydantic import BaseModel
 
 from app.database import get_db
-from app.models import User, Envelope, BankAccount, Category
+from app.models import User, Envelope, BankAccount, Category, EnvelopeHistory
 from app.schemas.envelope import (
     EnvelopeCreate,
     EnvelopeUpdate,
@@ -25,6 +26,11 @@ from app.utils.dependencies import get_current_user
 # Templates pour rendu HTML
 templates_dir = Path(__file__).parent.parent.parent.parent / "frontend" / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
+
+
+# Modèles pour routes spécifiques
+class AdjustBalanceRequest(BaseModel):
+    amount: float
 
 
 router = APIRouter(prefix="/envelopes", tags=["envelopes"])
@@ -142,24 +148,26 @@ async def create_envelope(
     """
     Crée une nouvelle enveloppe budgétaire
     
-    L'enveloppe doit être liée à un compte bancaire existant.
+    L'enveloppe peut être liée à un compte bancaire (optionnel).
+    Si bank_account_id est None, c'est une enveloppe en espèces.
     La catégorie est optionnelle.
     Le solde initial est à 0.
     """
-    # Vérifier que le compte bancaire existe et appartient à l'utilisateur
-    result = await db.execute(
-        select(BankAccount).where(
-            BankAccount.id == envelope_data.bank_account_id,
-            BankAccount.user_id == current_user.id
+    # Vérifier que le compte bancaire existe et appartient à l'utilisateur (si fourni)
+    if envelope_data.bank_account_id:
+        result = await db.execute(
+            select(BankAccount).where(
+                BankAccount.id == envelope_data.bank_account_id,
+                BankAccount.user_id == current_user.id
+            )
         )
-    )
-    bank_account = result.scalar_one_or_none()
-    
-    if not bank_account:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Bank account not found"
-        )
+        bank_account = result.scalar_one_or_none()
+        
+        if not bank_account:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Bank account not found"
+            )
     
     # Vérifier la catégorie si fournie
     if envelope_data.category_id:
@@ -358,3 +366,99 @@ async def reallocate_funds(
     
     # Retourner l'enveloppe source mise à jour
     return from_envelope
+
+
+@router.post("/{envelope_id}/adjust-balance")
+async def adjust_envelope_balance(
+    envelope_id: int,
+    request: AdjustBalanceRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Ajoute ou retire de l'argent d'une enveloppe.
+    
+    amount peut être positif (ajouter) ou négatif (retirer)
+    """
+    amount = Decimal(str(request.amount))
+    
+    # Récupérer l'enveloppe
+    result = await db.execute(
+        select(Envelope).where(
+            Envelope.id == envelope_id,
+            Envelope.user_id == current_user.id
+        )
+    )
+    envelope = result.scalar_one_or_none()
+    
+    if not envelope:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Envelope not found"
+        )
+    
+    # Vérifier qu'on a assez d'argent pour retirer
+    if amount < 0 and envelope.current_balance + amount < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Insufficient funds. Available: {envelope.current_balance}"
+        )
+    
+    # Ajuster le solde
+    envelope.current_balance += amount
+    
+    # Enregistrer dans l'historique
+    history_entry = EnvelopeHistory(
+        envelope_id=envelope_id,
+        amount=amount,
+        balance_after=envelope.current_balance
+    )
+    db.add(history_entry)
+    
+    await db.commit()
+    await db.refresh(envelope)
+    
+    return envelope
+
+@router.get("/{envelope_id}/history")
+async def get_envelope_history(
+    envelope_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Récupère l'historique des ajustements d'une enveloppe
+    """
+    # Vérifier que l'enveloppe appartient à l'utilisateur
+    result = await db.execute(
+        select(Envelope).where(
+            Envelope.id == envelope_id,
+            Envelope.user_id == current_user.id
+        )
+    )
+    envelope = result.scalar_one_or_none()
+    
+    if not envelope:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Envelope not found"
+        )
+    
+    # Récupérer l'historique, trié par date décroissante (plus récent d'abord)
+    result = await db.execute(
+        select(EnvelopeHistory)
+        .where(EnvelopeHistory.envelope_id == envelope_id)
+        .order_by(EnvelopeHistory.created_at.desc())
+    )
+    history = result.scalars().all()
+    
+    # Convertir en dictionnaires pour la réponse JSON
+    return [
+        {
+            "id": h.id,
+            "amount": float(h.amount),
+            "balance_after": float(h.balance_after),
+            "created_at": h.created_at.isoformat()
+        }
+        for h in history
+    ]

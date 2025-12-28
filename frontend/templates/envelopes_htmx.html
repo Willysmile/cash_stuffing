@@ -61,11 +61,7 @@
                 <button class="delete" @click="showModal = false"></button>
             </header>
             <section class="modal-card-body">
-                <form id="enveloppe-form"
-                      hx-post="/api/envelopes"
-                      hx-trigger="submit"
-                      hx-swap="none"
-                      @htmx:after-request="handleFormSubmit($event)">
+                <form id="enveloppe-form">
                     
                     <input type="hidden" name="id" x-model="editId">
                     
@@ -130,11 +126,78 @@
                 </form>
             </section>
             <footer class="modal-card-foot">
-                <button class="button is-success" 
-                        @click="document.getElementById('enveloppe-form').requestSubmit()">
+                <button type="button" class="button is-success" 
+                        @click="submitForm()">
                     Enregistrer
                 </button>
-                <button class="button" @click="showModal = false">Annuler</button>
+                <button type="button" class="button" @click="showModal = false">Annuler</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal détails enveloppe et historique -->
+    <div class="modal" :class="{ 'is-active': showDetailsModal }">
+        <div class="modal-background" @click="showDetailsModal = false"></div>
+        <div class="modal-card" style="max-height: 90vh; overflow-y: auto;">
+            <header class="modal-card-head">
+                <p class="modal-card-title" x-text="'Détails: ' + detailsData.name"></p>
+                <button class="delete" @click="showDetailsModal = false"></button>
+            </header>
+            <section class="modal-card-body" x-show="detailsData">
+                <div class="columns">
+                    <div class="column is-half">
+                        <div class="box">
+                            <h3 class="title is-5">Informations</h3>
+                            <p><strong>Montant actuel:</strong> <span x-text="detailsData.current_balance + ' €'"></span></p>
+                            <p><strong>Objectif:</strong> <span x-text="detailsData.target_amount + ' €'"></span></p>
+                            <p><strong>Progression:</strong> <span x-text="Math.round(detailsData.current_balance / detailsData.target_amount * 100) + '%'"></span></p>
+                            <template x-if="detailsData.category">
+                                <p><strong>Catégorie:</strong> <span x-text="detailsData.category?.name"></span></p>
+                            </template>
+                            <template x-if="detailsData.description">
+                                <p><strong>Description:</strong> <span x-text="detailsData.description"></span></p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <h3 class="title is-5">Historique</h3>
+                    <template x-if="detailsHistory && detailsHistory.length > 0">
+                        <table class="table is-striped is-fullwidth is-size-7">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Montant</th>
+                                    <th>Type</th>
+                                    <th>Solde après</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="item in detailsHistory" :key="item.id">
+                                    <tr>
+                                        <td x-text="new Date(item.created_at).toLocaleString('fr-FR')"></td>
+                                        <td>
+                                            <span :class="item.amount > 0 ? 'has-text-success' : 'has-text-danger'"
+                                                  x-text="(item.amount > 0 ? '+' : '') + item.amount.toFixed(2) + ' €'"></span>
+                                        </td>
+                                        <td>
+                                            <span class="tag" :class="item.amount > 0 ? 'is-success' : 'is-danger'"
+                                                  x-text="item.amount > 0 ? 'Ajout' : 'Retrait'"></span>
+                                        </td>
+                                        <td x-text="item.balance_after.toFixed(2) + ' €'"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </template>
+                    <template x-if="detailsHistory && detailsHistory.length === 0">
+                        <p class="has-text-grey-light">Aucun historique</p>
+                    </template>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <button type="button" class="button" @click="showDetailsModal = false">Fermer</button>
             </footer>
         </div>
     </div>
@@ -144,7 +207,10 @@
 function envelopesApp() {
     return {
         showModal: false,
+        showDetailsModal: false,
         editId: null,
+        detailsData: null,
+        detailsHistory: [],
         searchQuery: '',
         formData: {
             name: '',
@@ -152,6 +218,105 @@ function envelopesApp() {
             category_id: '',
             target_amount: '',
             description: ''
+        },
+
+        async submitForm() {
+            // Préparer les données JSON
+            const jsonData = {
+                name: this.formData.name,
+                bank_account_id: this.formData.bank_account_id ? parseInt(this.formData.bank_account_id) : null,
+                category_id: this.formData.category_id ? parseInt(this.formData.category_id) : null,
+                target_amount: parseFloat(this.formData.target_amount),
+                description: this.formData.description || '',
+                is_active: true
+            };
+            
+            // Déterminer URL et méthode
+            const url = this.editId ? `/api/envelopes/${this.editId}` : '/api/envelopes';
+            const method = this.editId ? 'PUT' : 'POST';
+            
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+                
+                if (response.ok) {
+                    this.showModal = false;
+                    this.resetForm();
+                    // Recharger la liste
+                    htmx.ajax('GET', '/api/envelopes/html', {target: '#enveloppes-list', swap: 'innerHTML'});
+                } else {
+                    const error = await response.json();
+                    alert('Erreur: ' + (error.detail || 'Une erreur est survenue'));
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur: ' + error.message);
+            }
+        },
+
+        async submitAdjustmentDirect(envelopeId, mode) {
+            const inputId = `amount-${envelopeId}`;
+            const inputElement = document.getElementById(inputId);
+            
+            if (!inputElement || !inputElement.value || parseFloat(inputElement.value) <= 0) {
+                alert('Veuillez entrer un montant valide');
+                return;
+            }
+
+            const amount = parseFloat(inputElement.value) * mode;
+            
+            try {
+                const response = await fetch(`/api/envelopes/${envelopeId}/adjust-balance`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ amount: amount })
+                });
+                
+                if (response.ok) {
+                    inputElement.value = '';
+                    // Recharger la liste
+                    htmx.ajax('GET', '/api/envelopes/html', {target: '#enveloppes-list', swap: 'innerHTML'});
+                    // Si la modal de détails est ouverte, la rafraîchir aussi
+                    if (this.showDetailsModal && this.detailsData && this.detailsData.id === envelopeId) {
+                        await this.loadEnvelopeHistory(envelopeId);
+                    }
+                } else {
+                    const error = await response.json();
+                    alert('Erreur: ' + (error.detail || 'Une erreur est survenue'));
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur: ' + error.message);
+            }
+        },
+
+        async viewEnvelopeDetails(id) {
+            try {
+                const response = await fetch(`/api/envelopes/${id}`);
+                this.detailsData = await response.json();
+                await this.loadEnvelopeHistory(id);
+                this.showDetailsModal = true;
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur: ' + error.message);
+            }
+        },
+
+        async loadEnvelopeHistory(id) {
+            try {
+                const response = await fetch(`/api/envelopes/${id}/history`);
+                this.detailsHistory = await response.json();
+            } catch (error) {
+                console.error('Erreur lors du chargement de l\'historique:', error);
+                this.detailsHistory = [];
+            }
         },
 
         async editEnvelope(id) {
@@ -168,21 +333,7 @@ function envelopesApp() {
                 description: envelope.description || ''
             };
             
-            // Changer le formulaire en mode PUT
-            const form = document.getElementById('enveloppe-form');
-            form.setAttribute('hx-put', `/api/envelopes/${id}`);
-            form.removeAttribute('hx-post');
-            
             this.showModal = true;
-        },
-
-        handleFormSubmit(event) {
-            if (event.detail.successful) {
-                this.showModal = false;
-                this.resetForm();
-                // Déclencher le rechargement de la liste
-                htmx.trigger('body', 'refreshEnvelopes');
-            }
         },
 
         resetForm() {
@@ -194,11 +345,6 @@ function envelopesApp() {
                 target_amount: '',
                 description: ''
             };
-            
-            // Remettre le formulaire en mode POST
-            const form = document.getElementById('enveloppe-form');
-            form.setAttribute('hx-post', '/api/envelopes');
-            form.removeAttribute('hx-put');
         }
     }
 }

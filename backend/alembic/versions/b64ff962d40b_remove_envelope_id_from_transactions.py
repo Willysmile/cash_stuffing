@@ -31,4 +31,3 @@ def downgrade() -> None:
     with op.batch_alter_table('transactions', schema=None) as batch_op:
         batch_op.add_column(sa.Column('envelope_id', sa.Integer(), nullable=True))
         batch_op.create_foreign_key('fk_transactions_envelope_id', 'envelopes', ['envelope_id'], ['id'], ondelete='SET NULL')
-        batch_op.create_index('ix_transactions_envelope_id', ['envelope_id'])
