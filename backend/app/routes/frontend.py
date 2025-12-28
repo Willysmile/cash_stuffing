@@ -46,7 +46,7 @@ async def transactions_page(request: Request):
 @router.get("/envelopes", response_class=HTMLResponse)
 async def envelopes_page(request: Request):
     """Page des enveloppes"""
-    return templates.TemplateResponse("envelopes.html", {"request": request})
+    return templates.TemplateResponse("envelopes_htmx.html", {"request": request})
 
 
 @router.get("/accounts", response_class=HTMLResponse)

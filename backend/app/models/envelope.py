@@ -16,15 +16,16 @@ class Envelope(Base):
     
     # Clés étrangères
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    bank_account_id = Column(Integer, ForeignKey("bank_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    bank_account_id = Column(Integer, ForeignKey("bank_accounts.id", ondelete="CASCADE"), nullable=True, index=True)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
     
     # Informations
     name = Column(String(100), nullable=False)
+    description = Column(String(255), nullable=True)
     
-    # Budget
-    monthly_budget = Column(Numeric(10, 2), default=0.00, nullable=False)
-    current_balance = Column(Numeric(10, 2), default=0.00, nullable=False)
+    # Objectif d'épargne
+    target_amount = Column(Numeric(10, 2), default=0.00, nullable=False)  # Objectif à atteindre
+    current_balance = Column(Numeric(10, 2), default=0.00, nullable=False)  # Solde actuel accumulé
     
     # Personnalisation
     color = Column(String(7), nullable=True)
@@ -41,7 +42,6 @@ class Envelope(Base):
     user = relationship("User", back_populates="envelopes")
     bank_account = relationship("BankAccount", back_populates="envelopes")
     category = relationship("Category", back_populates="envelopes")
-    transactions = relationship("Transaction", back_populates="envelope", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<Envelope(id={self.id}, name='{self.name}', budget={self.monthly_budget})>"
+        return f"<Envelope(id={self.id}, name='{self.name}', target={self.target_amount}, balance={self.current_balance})>"

@@ -1,0 +1,70 @@
+{% for envelope in envelopes %}
+<div class="column is-4">
+    <div class="card">
+        <header class="card-header {% if envelope.current_balance|float >= envelope.target_amount|float %}has-background-success{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.75) %}has-background-info{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.5) %}has-background-warning{% else %}has-background-danger{% endif %}">
+            <p class="card-header-title has-text-white">
+                {{ envelope.name }}
+            </p>
+            <button class="card-header-icon has-text-white" 
+                    @click="editEnvelope({{ envelope.id }})">
+                <span class="icon">
+                    <i class="fas fa-edit"></i>
+                </span>
+            </button>
+        </header>
+        <div class="card-content">
+            <div class="content">
+                {% if envelope.description %}
+                <p class="has-text-grey-dark mb-3">{{ envelope.description }}</p>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <strong>Objectif:</strong> {{ "%.2f"|format(envelope.target_amount) }} €<br>
+                    <strong>Montant actuel:</strong> {{ "%.2f"|format(envelope.current_balance) }} €
+                </div>
+                
+                <progress class="progress {% if envelope.current_balance|float >= envelope.target_amount|float %}is-success{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.75) %}is-info{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.5) %}is-warning{% else %}is-danger{% endif %}" 
+                          value="{{ envelope.current_balance }}" 
+                          max="{{ envelope.target_amount }}">
+                    {{ "%.0f"|format((envelope.current_balance|float / envelope.target_amount|float * 100) if envelope.target_amount|float > 0 else 0) }}%
+                </progress>
+                
+                {% if envelope.category %}
+                <p class="has-text-grey">
+                    <span class="icon-text">
+                        <span class="icon">
+                            <i class="fas fa-tag"></i>
+                        </span>
+                        <span>{{ envelope.category.name }}</span>
+                    </span>
+                </p>
+                {% endif %}
+                
+                {% if envelope.bank_account %}
+                <p class="has-text-grey">
+                    <span class="icon-text">
+                        <span class="icon">
+                            <i class="fas fa-university"></i>
+                        </span>
+                        <span>{{ envelope.bank_account.name }}</span>
+                    </span>
+                </p>
+                {% else %}
+                <p class="has-text-grey">
+                    <span class="icon-text">
+                        <span class="icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </span>
+                        <span>Espèces</span>
+                    </span>
+                </p>
+                {% endif %}
+                
+                {% if not envelope.is_active %}
+                <span class="tag is-warning mt-2">Inactive</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}

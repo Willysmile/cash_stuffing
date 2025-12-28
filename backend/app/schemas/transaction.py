@@ -28,7 +28,6 @@ class TransactionPriority(str, Enum):
 class TransactionBase(BaseModel):
     """Champs de base pour une transaction"""
     bank_account_id: int
-    envelope_id: Optional[int] = None
     category_id: int
     amount: Decimal = Field(..., decimal_places=2, description="Montant de la transaction")
     transaction_type: TransactionType
@@ -49,7 +48,6 @@ class TransactionCreate(TransactionBase):
 class TransactionUpdate(BaseModel):
     """Schéma pour mettre à jour une transaction"""
     bank_account_id: int | None = None
-    envelope_id: int | None = None
     category_id: int | None = None
     amount: Decimal | None = None
     transaction_type: TransactionType | None = None
@@ -73,17 +71,15 @@ class TransactionRead(TransactionBase):
 
 # Schéma avec relations expanded
 class TransactionWithDetails(TransactionRead):
-    """Schéma avec détails complets (catégorie, compte, enveloppe)"""
+    """Schéma avec détails complets (catégorie, compte)"""
     category_name: Optional[str] = None
     bank_account_name: Optional[str] = None
-    envelope_name: Optional[str] = None
 
 
 # Schéma pour les filtres de recherche
 class TransactionFilter(BaseModel):
     """Schéma pour filtrer les transactions"""
     bank_account_id: Optional[int] = None
-    envelope_id: Optional[int] = None
     category_id: Optional[int] = None
     transaction_type: Optional[TransactionType] = None
     priority: Optional[TransactionPriority] = None

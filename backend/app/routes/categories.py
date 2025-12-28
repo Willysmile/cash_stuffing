@@ -2,7 +2,8 @@
 Routes API pour la gestion des catégories
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
@@ -18,6 +19,23 @@ from app.schemas.category import (
 from app.utils.dependencies import get_current_user
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
+
+
+@router.get("/options", response_class=HTMLResponse)
+async def get_categories_options(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Retourne les options HTML pour le select des catégories"""
+    query = select(Category).where(Category.user_id == current_user.id).order_by(Category.name)
+    result = await db.execute(query)
+    categories = result.scalars().all()
+    
+    html = '<option value="">Aucune</option>\n'
+    for cat in categories:
+        html += f'<option value="{cat.id}">{cat.name}</option>\n'
+    
+    return HTMLResponse(content=html)
 
 
 @router.get("", response_model=List[CategoryRead])

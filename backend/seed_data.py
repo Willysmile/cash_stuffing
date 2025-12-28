@@ -103,9 +103,11 @@ async def seed_data():
         env_courses = Envelope(
             user_id=user.id,
             bank_account_id=compte_courant.id,
-            name="Courses",
-            monthly_budget=400.00,
-            current_balance=0.00,
+            name="Courses du mois",
+            category_id=categories["Alimentation"].id,
+            target_amount=400.00,
+            current_balance=185.20,
+            description="Budget courses alimentaires mensuel",
             color="#f14668",
             icon="shopping-basket"
         )
@@ -114,9 +116,11 @@ async def seed_data():
         env_essence = Envelope(
             user_id=user.id,
             bank_account_id=compte_courant.id,
-            name="Essence",
-            monthly_budget=150.00,
-            current_balance=0.00,
+            name="Essence & Carburant",
+            category_id=categories["Transport"].id,
+            target_amount=150.00,
+            current_balance=105.80,
+            description="Budget carburant mensuel",
             color="#3273dc",
             icon="gas-pump"
         )
@@ -126,17 +130,19 @@ async def seed_data():
             user_id=user.id,
             bank_account_id=compte_courant.id,
             name="Sorties & Loisirs",
-            monthly_budget=200.00,
-            current_balance=0.00,
+            category_id=categories["Loisirs"].id,
+            target_amount=200.00,
+            current_balance=56.98,
+            description="Budget sorties, restaurants et divertissements",
             color="#ffdd57",
             icon="theater-masks"
         )
         session.add(env_loisirs)
         
         await session.flush()
-        print(f"  ✓ {env_courses.name} - Budget: {env_courses.monthly_budget}€")
-        print(f"  ✓ {env_essence.name} - Budget: {env_essence.monthly_budget}€")
-        print(f"  ✓ {env_loisirs.name} - Budget: {env_loisirs.monthly_budget}€")
+        print(f"  ✓ {env_courses.name} - Objectif: {env_courses.target_amount}€")
+        print(f"  ✓ {env_essence.name} - Objectif: {env_essence.target_amount}€")
+        print(f"  ✓ {env_loisirs.name} - Objectif: {env_loisirs.target_amount}€")
         
         # 4. BÉNÉFICIAIRES
         print("\n👥 Création des bénéficiaires...")
@@ -185,7 +191,6 @@ async def seed_data():
                 "amount": 89.50,
                 "account": compte_courant,
                 "category": categories["Alimentation"],
-                "envelope": env_courses,
                 "payee": payees["Auchan"],
                 "description": "Courses semaine"
             },
@@ -195,7 +200,6 @@ async def seed_data():
                 "amount": 125.30,
                 "account": compte_courant,
                 "category": categories["Alimentation"],
-                "envelope": env_courses,
                 "payee": payees["Carrefour"],
                 "description": "Courses + produits ménagers"
             },
@@ -205,7 +209,6 @@ async def seed_data():
                 "amount": 67.80,
                 "account": compte_courant,
                 "category": categories["Alimentation"],
-                "envelope": env_courses,
                 "payee": payees["Leclerc"],
                 "description": "Courses semaine"
             },
@@ -216,7 +219,6 @@ async def seed_data():
                 "amount": 65.00,
                 "account": compte_courant,
                 "category": categories["Transport"],
-                "envelope": env_essence,
                 "payee": payees["Total"],
                 "description": "Plein essence"
             },
@@ -226,7 +228,6 @@ async def seed_data():
                 "amount": 58.50,
                 "account": compte_courant,
                 "category": categories["Transport"],
-                "envelope": env_essence,
                 "payee": payees["Shell"],
                 "description": "Plein essence"
             },
@@ -237,7 +238,6 @@ async def seed_data():
                 "amount": 13.99,
                 "account": compte_courant,
                 "category": categories["Loisirs"],
-                "envelope": env_loisirs,
                 "payee": payees["Netflix"],
                 "description": "Abonnement Netflix"
             },
@@ -247,7 +247,6 @@ async def seed_data():
                 "amount": 45.90,
                 "account": compte_courant,
                 "category": categories["Loisirs"],
-                "envelope": env_loisirs,
                 "payee": payees["Amazon"],
                 "description": "Livre + film"
             },
@@ -293,7 +292,6 @@ async def seed_data():
                 "amount": 32.50,
                 "account": compte_courant,
                 "category": categories["Alimentation"],
-                "envelope": env_courses,
                 "payee": payees["Auchan"],
                 "description": "Courses express"
             },
@@ -303,7 +301,6 @@ async def seed_data():
                 "amount": 25.00,
                 "account": compte_courant,
                 "category": categories["Loisirs"],
-                "envelope": env_loisirs,
                 "description": "Cinéma"
             },
         ]
@@ -313,7 +310,6 @@ async def seed_data():
                 user_id=user.id,
                 bank_account_id=trans_data["account"].id,
                 category_id=trans_data["category"].id,
-                envelope_id=trans_data.get("envelope").id if trans_data.get("envelope") else None,
                 payee_id=trans_data.get("payee").id if trans_data.get("payee") else None,
                 transaction_type=trans_data["type"],
                 amount=trans_data["amount"],

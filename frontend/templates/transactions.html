@@ -186,17 +186,6 @@
                 </div>
 
                 <div class="field">
-                    <label class="label">Enveloppe (optionnel)</label>
-                    <div class="control">
-                        <div class="select is-fullwidth">
-                            <select name="envelope_id" id="modalEnvelopeSelect">
-                                <option value="">Aucune</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="field">
                     <label class="label">Bénéficiaire</label>
                     <div class="control has-icons-left">
                         <div class="select is-fullwidth">
@@ -237,7 +226,6 @@ const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'applicati
 let transactions = [];
 let categories = [];
 let accounts = [];
-let envelopes = [];
 let payees = [];
 let currentAccountFilter = null; // Filtre actif par compte
 
@@ -247,7 +235,6 @@ async function init() {
         loadTransactions(),
         loadCategories(),
         loadAccounts(),
-        loadEnvelopes(),
         loadPayees()
     ]);
     
@@ -268,12 +255,10 @@ async function loadTransactions() {
         transactions.forEach(t => {
             const category = categories.find(c => c.id === t.category_id);
             const account = accounts.find(a => a.id === t.bank_account_id);
-            const envelope = envelopes.find(e => e.id === t.envelope_id);
             const payee = payees.find(p => p.id === t.payee_id);
             
             t.category = category;
             t.bank_account = account;
-            t.envelope = envelope;
             t.payee = payee;
         });
         
@@ -299,13 +284,6 @@ async function loadAccounts() {
     }
 }
 
-async function loadEnvelopes() {
-    const response = await fetch(`${API_BASE}/envelopes`, { headers });
-    if (response.ok) {
-        envelopes = await response.json();
-        populateSelect('modalEnvelopeSelect', envelopes);
-    }
-}
 
 async function loadPayees() {
     const response = await fetch(`${API_BASE}/payees`, { headers });
@@ -393,7 +371,7 @@ function displayTransactions(data) {
                     <th>Description</th>
                     <th>Type</th>
                     <th>Catégorie</th>
-                    <th>Compte</th>
+                    <th>Sous-catégorie</th>
                     <th class="has-text-right">Montant</th>
                     <th>Actions</th>
                 </tr>
@@ -408,8 +386,8 @@ function displayTransactions(data) {
                                 ${t.transaction_type === 'income' ? 'Revenu' : 'Dépense'}
                             </span>
                         </td>
-                        <td>${t.category?.name || '-'}</td>
-                        <td>${t.bank_account?.name || '-'}</td>
+                        <td>${t.category?.parent ? t.category.parent.name : (t.category?.name || '-')}</td>
+                        <td>${t.category?.parent ? t.category.name : '-'}</td>
                         <td class="has-text-right ${t.transaction_type === 'income' ? 'has-text-success' : 'has-text-danger'}">
                             ${t.transaction_type === 'income' ? '+' : '-'}${parseFloat(t.amount).toFixed(2)} €
                         </td>
@@ -497,7 +475,6 @@ async function saveTransaction() {
         date: formData.get('date'),
         bank_account_id: parseInt(formData.get('bank_account_id')),
         category_id: parseInt(formData.get('category_id')),
-        envelope_id: formData.get('envelope_id') ? parseInt(formData.get('envelope_id')) : null,
         description: formData.get('description') || null,
         payee_id: formData.get('payee_id') ? parseInt(formData.get('payee_id')) : null,
         priority: null,

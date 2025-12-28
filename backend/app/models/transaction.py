@@ -17,7 +17,6 @@ class Transaction(Base):
     # Clés étrangères
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     bank_account_id = Column(Integer, ForeignKey("bank_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
-    envelope_id = Column(Integer, ForeignKey("envelopes.id", ondelete="SET NULL"), nullable=True, index=True)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=False, index=True)
     payee_id = Column(Integer, ForeignKey("payees.id", ondelete="SET NULL"), nullable=True, index=True)
     
@@ -40,7 +39,6 @@ class Transaction(Base):
     # Relations
     user = relationship("User", back_populates="transactions")
     bank_account = relationship("BankAccount", back_populates="transactions")
-    envelope = relationship("Envelope", back_populates="transactions")
     category = relationship("Category", back_populates="transactions")
     payee = relationship("Payee", back_populates="transactions")
     wish_list_items = relationship("WishListItem", back_populates="transaction")

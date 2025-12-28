@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Enveloppes - Cash Stuffing{% endblock %}
+
+{% block content %}
+<div x-data="envelopesApp()">
+    <section class="hero is-info">
+        <div class="hero-body">
+            <p class="title">Enveloppes budgétaires</p>
+            <p class="subtitle">Organisez vos objectifs d'épargne</p>
+        </div>
+    </section>
+
+    <div class="section">
+        <div class="level">
+            <div class="level-left">
+                <div class="level-item">
+                    <div class="field">
+                        <div class="control has-icons-left">
+                            <input class="input" type="text" 
+                                   x-model="searchQuery"
+                                   placeholder="Rechercher...">
+                            <span class="icon is-left">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="level-right">
+                <div class="level-item">
+                    <button class="button is-success" @click="resetForm(); showModal = true">
+                        <span class="icon"><i class="fas fa-plus"></i></span>
+                        <span>Nouvelle enveloppe</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des enveloppes chargées via HTMX -->
+        <div class="columns is-multiline" 
+             id="enveloppes-list"
+             hx-get="/api/envelopes/html"
+             hx-trigger="load, refreshEnvelopes from:body"
+             hx-swap="innerHTML">
+            <div class="column is-12 has-text-centered">
+                <span class="icon is-large">
+                    <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                </span>
+                <p>Chargement...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal avec Alpine.js -->
+    <div class="modal" :class="{ 'is-active': showModal }">
+        <div class="modal-background" @click="showModal = false"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title" x-text="editId ? 'Modifier l\'enveloppe' : 'Nouvelle enveloppe'"></p>
+                <button class="delete" @click="showModal = false"></button>
+            </header>
+            <section class="modal-card-body">
+                <form id="enveloppe-form"
+                      hx-post="/api/envelopes"
+                      hx-trigger="submit"
+                      hx-swap="none"
+                      @htmx:after-request="handleFormSubmit($event)">
+                    
+                    <input type="hidden" name="id" x-model="editId">
+                    
+                    <div class="field">
+                        <label class="label">Nom *</label>
+                        <div class="control">
+                            <input class="input" type="text" name="name" required
+                                   x-model="formData.name">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Compte bancaire</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select name="bank_account_id" x-model="formData.bank_account_id"
+                                        hx-get="/api/bank_accounts/options"
+                                        hx-trigger="load"
+                                        hx-swap="innerHTML">
+                                    <option value="">💵 Espèces (sans compte)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="help">Laissez vide pour une enveloppe en espèces</p>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Catégorie</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select name="category_id" x-model="formData.category_id"
+                                        hx-get="/api/categories/options"
+                                        hx-trigger="load"
+                                        hx-swap="innerHTML">
+                                    <option value="">Aucune</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Objectif à atteindre (€) *</label>
+                        <div class="control has-icons-left">
+                            <input class="input" type="number" step="0.01" min="0" 
+                                   name="target_amount" required
+                                   x-model="formData.target_amount">
+                            <span class="icon is-left">
+                                <i class="fas fa-bullseye"></i>
+                            </span>
+                        </div>
+                        <p class="help">Montant total que vous souhaitez épargner</p>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Description</label>
+                        <div class="control">
+                            <textarea class="textarea" name="description" rows="3" 
+                                      x-model="formData.description"
+                                      placeholder="Ex: Vacances d'été 2026"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-success" 
+                        @click="document.getElementById('enveloppe-form').requestSubmit()">
+                    Enregistrer
+                </button>
+                <button class="button" @click="showModal = false">Annuler</button>
+            </footer>
+        </div>
+    </div>
+</div>
+
+<script>
+function envelopesApp() {
+    return {
+        showModal: false,
+        editId: null,
+        searchQuery: '',
+        formData: {
+            name: '',
+            bank_account_id: '',
+            category_id: '',
+            target_amount: '',
+            description: ''
+        },
+
+        async editEnvelope(id) {
+            // Charger les données de l'enveloppe
+            const response = await fetch(`/api/envelopes/${id}`);
+            const envelope = await response.json();
+            
+            this.editId = id;
+            this.formData = {
+                name: envelope.name,
+                bank_account_id: envelope.bank_account_id || '',
+                category_id: envelope.category_id || '',
+                target_amount: envelope.target_amount,
+                description: envelope.description || ''
+            };
+            
+            // Changer le formulaire en mode PUT
+            const form = document.getElementById('enveloppe-form');
+            form.setAttribute('hx-put', `/api/envelopes/${id}`);
+            form.removeAttribute('hx-post');
+            
+            this.showModal = true;
+        },
+
+        handleFormSubmit(event) {
+            if (event.detail.successful) {
+                this.showModal = false;
+                this.resetForm();
+                // Déclencher le rechargement de la liste
+                htmx.trigger('body', 'refreshEnvelopes');
+            }
+        },
+
+        resetForm() {
+            this.editId = null;
+            this.formData = {
+                name: '',
+                bank_account_id: '',
+                category_id: '',
+                target_amount: '',
+                description: ''
+            };
+            
+            // Remettre le formulaire en mode POST
+            const form = document.getElementById('enveloppe-form');
+            form.setAttribute('hx-post', '/api/envelopes');
+            form.removeAttribute('hx-put');
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,12 +1,15 @@
 """
 Routes API pour les enveloppes budgétaires
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from decimal import Decimal
+from pathlib import Path
 
 from app.database import get_db
 from app.models import User, Envelope, BankAccount, Category
@@ -18,6 +21,10 @@ from app.schemas.envelope import (
     EnvelopeWithStats
 )
 from app.utils.dependencies import get_current_user
+
+# Templates pour rendu HTML
+templates_dir = Path(__file__).parent.parent.parent.parent / "frontend" / "templates"
+templates = Jinja2Templates(directory=str(templates_dir))
 
 
 router = APIRouter(prefix="/envelopes", tags=["envelopes"])
@@ -56,6 +63,48 @@ async def list_envelopes(
     envelopes = result.scalars().all()
     
     return envelopes
+
+
+@router.get("/html", response_class=HTMLResponse)
+async def get_envelopes_html(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user = Depends(get_current_user),
+    bank_account_id: Optional[int] = None,
+    category_id: Optional[int] = None,
+    is_active: Optional[bool] = None
+):
+    """Retourne les enveloppes sous forme de fragment HTML pour HTMX"""
+    # Récupérer les enveloppes avec jointures
+    query = (
+        select(Envelope)
+        .options(
+            selectinload(Envelope.category),
+            selectinload(Envelope.bank_account)
+        )
+        .where(Envelope.user_id == current_user.id)
+    )
+    
+    # Appliquer les filtres
+    if bank_account_id is not None:
+        query = query.where(Envelope.bank_account_id == bank_account_id)
+    if category_id is not None:
+        query = query.where(Envelope.category_id == category_id)
+    if is_active is not None:
+        query = query.where(Envelope.is_active == is_active)
+    
+    # Tri par nom
+    query = query.order_by(Envelope.name)
+    
+    result = await db.execute(query)
+    envelopes = result.scalars().all()
+    
+    # Rendu du template
+    templates = Jinja2Templates(directory=templates_dir)
+    return templates.TemplateResponse(
+        "components/envelope_cards.html",
+        {"request": request, "envelopes": envelopes}
+    )
 
 
 @router.get("/{envelope_id}", response_model=EnvelopeRead)

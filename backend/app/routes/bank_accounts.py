@@ -4,7 +4,8 @@ Routes API pour la gestion des comptes bancaires
 from typing import List, Optional
 from decimal import Decimal
 from datetime import date
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
@@ -64,6 +65,23 @@ async def recalculate_balance(
     await db.refresh(account)
     
     return account
+
+
+@router.get("/options", response_class=HTMLResponse)
+async def get_bank_accounts_options(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Retourne les options HTML pour le select des comptes bancaires"""
+    query = select(BankAccount).where(BankAccount.user_id == current_user.id).order_by(BankAccount.name)
+    result = await db.execute(query)
+    accounts = result.scalars().all()
+    
+    html = '<option value="">💵 Espèces (sans compte)</option>\n'
+    for account in accounts:
+        html += f'<option value="{account.id}">{account.name}</option>\n'
+    
+    return HTMLResponse(content=html)
 
 
 @router.get("", response_model=List[BankAccountRead])

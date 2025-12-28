@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Script de lancement des serveurs Cash Stuffing
+# Bisounours 🐻🌈
+
+cd "$(dirname "$0")"
+
+echo "🐻🌈 =================================="
+echo "   BISOUNOURS - Cash Stuffing"
+echo "=================================="
+echo ""
+
+# Arrêt des serveurs existants
+echo "🔍 Recherche des processus uvicorn existants..."
+EXISTING_PIDS=$(pgrep -f "uvicorn app.main:app")
+
+if [ -n "$EXISTING_PIDS" ]; then
+    echo "⚠️  Processus uvicorn trouvés: $EXISTING_PIDS"
+    echo "🛑 Arrêt des processus existants..."
+    pkill -f "uvicorn app.main:app"
+    sleep 1
+    echo "✅ Processus arrêtés"
+else
+    echo "✅ Aucun processus uvicorn en cours"
+fi
+echo ""
+
+# Lancement du backend
+echo "🚀 Démarrage du serveur backend FastAPI..."
+echo "📂 Répertoire: $(pwd)/backend"
+cd backend
+nohup ../venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 > /tmp/uvicorn.log 2>&1 &
+BACKEND_PID=$!
+cd ..
+sleep 1
+
+# Vérification que le serveur a démarré
+if ps -p $BACKEND_PID > /dev/null; then
+    echo "✅ Backend démarré avec succès (PID: $BACKEND_PID)"
+else
+    echo "❌ Erreur lors du démarrage du backend"
+    exit 1
+fi
+
+echo ""
+echo "🎉 =================================="
+echo "   SERVEURS DÉMARRÉS"
+echo "=================================="
+echo ""
+echo "🌐 URL Backend:  http://127.0.0.1:8000"
+echo "📖 API Docs:     http://127.0.0.1:8000/docs"
+echo "🔧 Frontend:     http://127.0.0.1:8000/"
+echo ""
+echo "📋 Logs backend: /tmp/uvicorn.log"
+echo "🔍 Voir logs:    tail -f /tmp/uvicorn.log"
+echo ""
+echo "🛑 Pour arrêter: kill $BACKEND_PID"
+echo "   ou:           pkill -f 'uvicorn app.main:app'"
+echo ""

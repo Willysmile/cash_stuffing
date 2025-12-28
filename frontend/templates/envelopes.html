@@ -64,14 +64,15 @@
                 </div>
 
                 <div class="field">
-                    <label class="label">Compte bancaire *</label>
+                    <label class="label">Compte bancaire</label>
                     <div class="control">
                         <div class="select is-fullwidth">
-                            <select name="bank_account_id" id="modalAccountSelect" required>
-                                <option value="">Sélectionnez un compte</option>
+                            <select name="bank_account_id" id="modalAccountSelect">
+                                <option value="">💵 Espèces (sans compte)</option>
                             </select>
                         </div>
                     </div>
+                    <p class="help">Laissez vide pour une enveloppe en espèces</p>
                 </div>
 
                 <div class="field">
@@ -86,19 +87,20 @@
                 </div>
 
                 <div class="field">
-                    <label class="label">Budget alloué (€)</label>
+                    <label class="label">Objectif à atteindre (€) *</label>
                     <div class="control has-icons-left">
-                        <input class="input" type="number" step="0.01" min="0" name="allocated_budget" value="0">
+                        <input class="input" type="number" step="0.01" min="0" name="target_amount" required>
                         <span class="icon is-left">
-                            <i class="fas fa-euro-sign"></i>
+                            <i class="fas fa-bullseye"></i>
                         </span>
                     </div>
+                    <p class="help">Montant total que vous souhaitez épargner</p>
                 </div>
 
                 <div class="field">
                     <label class="label">Description</label>
                     <div class="control">
-                        <textarea class="textarea" name="description" rows="3"></textarea>
+                        <textarea class="textarea" name="description" rows="3" placeholder="Ex: Vacances d'été 2026"></textarea>
                     </div>
                 </div>
             </form>
@@ -171,16 +173,37 @@ let accounts = [];
 
 async function init() {
     await Promise.all([
-        loadEnvelopes(),
         loadCategories(),
         loadAccounts()
     ]);
+    await loadEnvelopes();
 }
 
 async function loadEnvelopes() {
     const response = await fetch(`${API_BASE}/envelopes`, { headers });
     if (response.ok) {
         envelopes = await response.json();
+        console.log('Enveloppes chargées:', envelopes);
+        console.log('Catégories disponibles:', categories);
+        console.log('Comptes disponibles:', accounts);
+        
+        // Enrichir les enveloppes avec les noms de catégorie et compte
+        envelopes.forEach(e => {
+            if (e.category_id) {
+                const category = categories.find(c => c.id === e.category_id);
+                if (category) {
+                    e.category = category;
+                }
+            }
+            if (e.bank_account_id) {
+                const account = accounts.find(a => a.id === e.bank_account_id);
+                if (account) {
+                    e.bank_account = account;
+                }
+            }
+        });
+        
+        console.log('Enveloppes enrichies:', envelopes);
         displayEnvelopes(envelopes);
     }
 }
@@ -217,56 +240,59 @@ function populateSelect(selectId, items) {
 function displayEnvelopes(data) {
     const container = document.getElementById('envelopesList');
     
+    console.log('displayEnvelopes appelé avec:', data);
+    
     if (!data || data.length === 0) {
         container.innerHTML = '<div class="column is-12"><p class="has-text-centered has-text-grey">Aucune enveloppe</p></div>';
         return;
     }
     
-    const html = data.map(e => {
-        const budget = parseFloat(e.allocated_budget || 0);
-        const spent = parseFloat(e.current_balance || 0);
-        const percentage = budget > 0 ? (spent / budget) * 100 : 0;
-        const colorClass = percentage > 90 ? 'is-danger' : percentage > 70 ? 'is-warning' : 'is-success';
+    container.innerHTML = '';
+    
+    data.forEach(e => {
+        console.log('Enveloppe:', e.name, 'objet complet:', e);
+        const target = parseFloat(e.target_amount || 0);
+        const current = parseFloat(e.current_balance || 0);
+        const percentage = target > 0 ? (current / target) * 100 : 0;
+        const bgClass = percentage >= 100 ? 'has-background-success' : percentage >= 75 ? 'has-background-info' : percentage >= 50 ? 'has-background-warning' : 'has-background-danger';
+        const colorClass = percentage >= 100 ? 'is-success' : percentage >= 75 ? 'is-info' : percentage >= 50 ? 'is-warning' : 'is-danger';
         
-        return `
+        const html = `
             <div class="column is-4">
                 <div class="card">
-                    <header class="card-header ${colorClass}">
+                    <header class="card-header ${bgClass}">
                         <p class="card-header-title has-text-white">
-                            <span class="icon">
-                                <i class="fas fa-envelope"></i>
-                            </span>
-                            <span>${e.name}</span>
+                            ${e.name}
                         </p>
                     </header>
                     <div class="card-content">
                         <div class="content">
                             <p><strong>Catégorie:</strong> ${e.category?.name || '-'}</p>
-                            <p><strong>Compte:</strong> ${e.bank_account?.name || '-'}</p>
+                            <p><strong>Type:</strong> ${e.bank_account ? `🏦 ${e.bank_account.name}` : '💵 Espèces'}</p>
                             ${e.description ? `<p>${e.description}</p>` : ''}
                             
                             <div class="field">
-                                <label class="label is-small">Utilisation</label>
+                                <label class="label is-small">Progression</label>
                                 <progress class="progress ${colorClass}" value="${percentage}" max="100">${percentage.toFixed(0)}%</progress>
                             </div>
                             
                             <div class="level is-mobile">
                                 <div class="level-item has-text-centered">
                                     <div>
-                                        <p class="heading">Budget</p>
-                                        <p class="title is-6">${budget.toFixed(2)} €</p>
+                                        <p class="heading">Objectif</p>
+                                        <p class="title is-6">${target.toFixed(2)} €</p>
                                     </div>
                                 </div>
                                 <div class="level-item has-text-centered">
                                     <div>
-                                        <p class="heading">Dépensé</p>
-                                        <p class="title is-6">${spent.toFixed(2)} €</p>
+                                        <p class="heading">Épargné</p>
+                                        <p class="title is-6">${current.toFixed(2)} €</p>
                                     </div>
                                 </div>
                                 <div class="level-item has-text-centered">
                                     <div>
                                         <p class="heading">Restant</p>
-                                        <p class="title is-6">${(budget - spent).toFixed(2)} €</p>
+                                        <p class="title is-6">${(target - current).toFixed(2)} €</p>
                                     </div>
                                 </div>
                             </div>
@@ -289,9 +315,9 @@ function displayEnvelopes(data) {
                 </div>
             </div>
         `;
-    }).join('');
-    
-    container.innerHTML = html;
+        
+        container.insertAdjacentHTML('beforeend', html);
+    });
 }
 
 function showAddModal() {
@@ -310,7 +336,7 @@ async function editEnvelope(id) {
     document.querySelector('[name="name"]').value = envelope.name;
     document.querySelector('[name="bank_account_id"]').value = envelope.bank_account_id;
     document.querySelector('[name="category_id"]').value = envelope.category_id;
-    document.querySelector('[name="allocated_budget"]').value = envelope.allocated_budget || 0;
+    document.querySelector('[name="target_amount"]').value = envelope.target_amount || 0;
     document.querySelector('[name="description"]').value = envelope.description || '';
     
     document.getElementById('envelopeModal').classList.add('is-active');
@@ -323,9 +349,9 @@ async function saveEnvelope() {
     
     const data = {
         name: formData.get('name'),
-        bank_account_id: parseInt(formData.get('bank_account_id')),
-        category_id: parseInt(formData.get('category_id')),
-        allocated_budget: parseFloat(formData.get('allocated_budget')) || 0,
+        bank_account_id: formData.get('bank_account_id') ? parseInt(formData.get('bank_account_id')) : null,
+        category_id: formData.get('category_id') ? parseInt(formData.get('category_id')) : null,
+        target_amount: parseFloat(formData.get('target_amount')) || 0,
         description: formData.get('description') || null
     };
     

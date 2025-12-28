@@ -11,9 +11,10 @@ from decimal import Decimal
 class EnvelopeBase(BaseModel):
     """Champs de base pour une enveloppe budgétaire"""
     name: str = Field(..., min_length=1, max_length=100)
-    bank_account_id: int
+    bank_account_id: Optional[int] = None
     category_id: Optional[int] = None
-    monthly_budget: Decimal = Field(..., ge=0, decimal_places=2, description="Budget mensuel alloué")
+    target_amount: Decimal = Field(..., ge=0, decimal_places=2, description="Objectif à atteindre")
+    description: Optional[str] = Field(None, max_length=255)
     color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     icon: Optional[str] = Field(None, max_length=50)
     is_active: bool = True
@@ -31,7 +32,8 @@ class EnvelopeUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     bank_account_id: Optional[int] = None
     category_id: Optional[int] = None
-    monthly_budget: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
+    target_amount: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
+    description: Optional[str] = Field(None, max_length=255)
     color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     icon: Optional[str] = Field(None, max_length=50)
     is_active: Optional[bool] = None
@@ -61,6 +63,6 @@ class EnvelopeRead(EnvelopeBase):
 # Schéma avec statistiques
 class EnvelopeWithStats(EnvelopeRead):
     """Schéma avec statistiques de l'enveloppe"""
-    budget_used_percent: float = Field(description="Pourcentage du budget utilisé")
-    remaining_budget: Decimal = Field(description="Budget restant ce mois")
-    is_over_budget: bool = Field(description="Dépassement de budget")
+    progress_percent: float = Field(description="Pourcentage de l'objectif atteint")
+    remaining_to_target: Decimal = Field(description="Montant restant pour atteindre l'objectif")
+    is_goal_reached: bool = Field(description="Objectif atteint")
