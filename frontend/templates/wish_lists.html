@@ -1,0 +1,640 @@
+{% extends "base.html" %}
+
+{% block title %}Listes de souhaits - Cash Stuffing{% endblock %}
+
+{% block content %}
+<section class="hero is-link">
+    <div class="hero-body">
+        <p class="title">🎁 Listes de souhaits</p>
+        <p class="subtitle">Planifiez vos cadeaux et achats futurs</p>
+    </div>
+</section>
+
+<div class="section">
+    <!-- Filtres et actions -->
+    <div class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <div class="field has-addons">
+                    <div class="control">
+                        <div class="select">
+                            <select id="filterType">
+                                <option value="">Tous les types</option>
+                                <option value="receive">🎁 À recevoir</option>
+                                <option value="give">🎂 À offrir</option>
+                                <option value="mixed">🎉 Mixte</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <button class="button" onclick="applyFilters()">
+                            <span class="icon"><i class="fas fa-filter"></i></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="level-item">
+                <div class="control has-icons-left">
+                    <input class="input" type="text" id="searchInput" placeholder="Rechercher une liste...">
+                    <span class="icon is-left">
+                        <i class="fas fa-search"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <button class="button is-link" onclick="showCreateListModal()">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Nouvelle liste</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des wish lists -->
+    <div class="columns is-multiline" id="wishListsContainer">
+        <div class="column is-12 has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Chargement...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de création/édition de liste -->
+<div class="modal" id="listModal">
+    <div class="modal-background" onclick="closeListModal()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title" id="listModalTitle">Nouvelle liste de souhaits</p>
+            <button class="delete" onclick="closeListModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <form id="listForm">
+                <input type="hidden" id="listId">
+                
+                <div class="field">
+                    <label class="label">Nom de la liste *</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" name="name" placeholder="Liste Noël 2025" required>
+                        <span class="icon is-left">
+                            <i class="fas fa-list"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Type *</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select name="list_type" required>
+                                <option value="">Sélectionnez un type</option>
+                                <option value="receive">🎁 À recevoir (cadeaux souhaités)</option>
+                                <option value="give">🎂 À offrir (cadeaux pour autrui)</option>
+                                <option value="mixed">🎉 Mixte</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="help">Recevoir : ce que vous voulez recevoir | Offrir : ce que vous voulez donner</p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Description</label>
+                    <div class="control">
+                        <textarea class="textarea" name="description" rows="3" placeholder="Description optionnelle de la liste"></textarea>
+                    </div>
+                </div>
+            </form>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-link" onclick="saveList()">Enregistrer</button>
+            <button class="button" onclick="closeListModal()">Annuler</button>
+        </footer>
+    </div>
+</div>
+
+<!-- Modal de vue détail + articles -->
+<div class="modal" id="detailModal">
+    <div class="modal-background" onclick="closeDetailModal()"></div>
+    <div class="modal-card" style="width: 90%; max-width: 1200px;">
+        <header class="modal-card-head">
+            <p class="modal-card-title">
+                <span id="detailListIcon"></span>
+                <span id="detailListName"></span>
+            </p>
+            <button class="delete" onclick="closeDetailModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <!-- Statistiques -->
+            <div class="box has-background-light">
+                <div class="columns is-mobile">
+                    <div class="column">
+                        <p class="heading">Total</p>
+                        <p class="title is-5" id="detailTotalCost">0 €</p>
+                    </div>
+                    <div class="column">
+                        <p class="heading">Acheté</p>
+                        <p class="title is-5 has-text-success" id="detailPurchasedCost">0 €</p>
+                    </div>
+                    <div class="column">
+                        <p class="heading">Restant</p>
+                        <p class="title is-5 has-text-danger" id="detailRemainingCost">0 €</p>
+                    </div>
+                    <div class="column">
+                        <p class="heading">Articles</p>
+                        <p class="title is-5" id="detailItemsCount">0/0</p>
+                    </div>
+                </div>
+                <progress class="progress is-link" id="detailProgress" value="0" max="100">0%</progress>
+            </div>
+
+            <!-- Bouton ajout article -->
+            <div class="mb-4">
+                <button class="button is-link is-light" onclick="showAddItemModal()">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Ajouter un article</span>
+                </button>
+            </div>
+
+            <!-- Liste des articles -->
+            <div id="itemsContainer">
+                <p class="has-text-centered has-text-grey">Aucun article dans cette liste</p>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button" onclick="closeDetailModal()">Fermer</button>
+        </footer>
+    </div>
+</div>
+
+<!-- Modal d'ajout/édition d'article -->
+<div class="modal" id="itemModal">
+    <div class="modal-background" onclick="closeItemModal()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title" id="itemModalTitle">Nouvel article</p>
+            <button class="delete" onclick="closeItemModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <form id="itemForm">
+                <input type="hidden" id="itemId">
+                
+                <div class="field">
+                    <label class="label">Nom de l'article *</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" name="name" placeholder="PlayStation 5" required>
+                        <span class="icon is-left">
+                            <i class="fas fa-gift"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="field">
+                            <label class="label">Prix (€) *</label>
+                            <div class="control has-icons-left">
+                                <input class="input" type="number" step="0.01" min="0" name="price" placeholder="550.00" required>
+                                <span class="icon is-left">
+                                    <i class="fas fa-euro-sign"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="field">
+                            <label class="label">Quantité *</label>
+                            <div class="control">
+                                <input class="input" type="number" min="1" name="quantity" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Priorité *</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select name="priority" required>
+                                <option value="medium">Moyenne</option>
+                                <option value="high">Haute</option>
+                                <option value="low">Basse</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">URL (lien produit)</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="url" name="url" placeholder="https://www.amazon.fr/...">
+                        <span class="icon is-left">
+                            <i class="fas fa-link"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Description</label>
+                    <div class="control">
+                        <textarea class="textarea" name="description" rows="2"></textarea>
+                    </div>
+                </div>
+            </form>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-link" onclick="saveItem()">Enregistrer</button>
+            <button class="button" onclick="closeItemModal()">Annuler</button>
+        </footer>
+    </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+// === MODE TEST : TOKEN FACTICE ===
+const token = localStorage.getItem('access_token') || 'test-mode';
+if (!localStorage.getItem('access_token')) {
+    localStorage.setItem('access_token', 'test-mode');
+}
+const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+let wishLists = [];
+let currentList = null;
+let currentItems = [];
+
+// Chargement initial
+document.addEventListener('DOMContentLoaded', () => {
+    loadWishLists();
+    document.getElementById('searchInput').addEventListener('input', applyFilters);
+    document.getElementById('filterType').addEventListener('change', applyFilters);
+});
+
+// === GESTION DES LISTES ===
+
+async function loadWishLists() {
+    const response = await fetch(`${API_BASE}/wish_lists`, { headers });
+    if (response.ok) {
+        wishLists = await response.json();
+        displayWishLists(wishLists);
+    }
+}
+
+function displayWishLists(lists) {
+    const container = document.getElementById('wishListsContainer');
+    
+    if (!lists || lists.length === 0) {
+        container.innerHTML = '<div class="column is-12"><p class="has-text-centered has-text-grey">Aucune liste de souhaits. Créez-en une !</p></div>';
+        return;
+    }
+    
+    const typeIcons = { receive: '🎁', give: '🎂', mixed: '🎉' };
+    const typeColors = { receive: 'is-info', give: 'is-danger', mixed: 'is-primary' };
+    
+    const html = lists.map(list => {
+        const totalItems = list.items?.length || 0;
+        const purchasedItems = list.items?.filter(i => i.is_purchased).length || 0;
+        const percentage = totalItems > 0 ? (purchasedItems / totalItems) * 100 : 0;
+        
+        const totalCost = parseFloat(list.total_cost || 0);
+        const purchasedCost = parseFloat(list.purchased_cost || 0);
+        const remainingCost = parseFloat(list.remaining_cost || 0);
+        
+        return `
+            <div class="column is-4">
+                <div class="card">
+                    <header class="card-header ${typeColors[list.list_type]}">
+                        <p class="card-header-title has-text-white">
+                            ${typeIcons[list.list_type]} ${list.name}
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <span class="tag ${typeColors[list.list_type]} is-light mb-2">
+                                ${list.list_type === 'receive' ? 'À recevoir' : list.list_type === 'give' ? 'À offrir' : 'Mixte'}
+                            </span>
+                            ${list.description ? `<p class="is-size-7">${list.description}</p>` : ''}
+                            
+                            <div class="mt-3">
+                                <p class="heading">Progression</p>
+                                <p class="subtitle is-6">${purchasedItems}/${totalItems} articles</p>
+                                <progress class="progress ${typeColors[list.list_type]}" value="${percentage}" max="100">${percentage.toFixed(0)}%</progress>
+                            </div>
+                            
+                            <div class="level is-mobile mt-2">
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Total</p>
+                                        <p class="title is-6">${totalCost.toFixed(2)} €</p>
+                                    </div>
+                                </div>
+                                <div class="level-item has-text-centered">
+                                    <div>
+                                        <p class="heading">Restant</p>
+                                        <p class="title is-6 has-text-danger">${remainingCost.toFixed(2)} €</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="card-footer">
+                        <a class="card-footer-item" onclick="viewListDetails(${list.id})">
+                            <span class="icon"><i class="fas fa-eye"></i></span>
+                            <span>Voir</span>
+                        </a>
+                        <a class="card-footer-item" onclick="editList(${list.id})">
+                            <span class="icon"><i class="fas fa-edit"></i></span>
+                            <span>Modifier</span>
+                        </a>
+                        <a class="card-footer-item has-text-danger" onclick="deleteList(${list.id})">
+                            <span class="icon"><i class="fas fa-trash"></i></span>
+                            <span>Supprimer</span>
+                        </a>
+                    </footer>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+}
+
+function applyFilters() {
+    const type = document.getElementById('filterType').value;
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    
+    let filtered = [...wishLists];
+    
+    if (type) filtered = filtered.filter(l => l.list_type === type);
+    if (search) filtered = filtered.filter(l => 
+        l.name.toLowerCase().includes(search) ||
+        (l.description || '').toLowerCase().includes(search)
+    );
+    
+    displayWishLists(filtered);
+}
+
+function showCreateListModal() {
+    document.getElementById('listModalTitle').textContent = 'Nouvelle liste de souhaits';
+    document.getElementById('listForm').reset();
+    document.getElementById('listId').value = '';
+    document.getElementById('listModal').classList.add('is-active');
+}
+
+async function editList(id) {
+    const list = wishLists.find(l => l.id === id);
+    if (!list) return;
+    
+    document.getElementById('listModalTitle').textContent = 'Modifier la liste';
+    document.getElementById('listId').value = list.id;
+    document.querySelector('[name="name"]').value = list.name;
+    document.querySelector('[name="list_type"]').value = list.list_type;
+    document.querySelector('[name="description"]').value = list.description || '';
+    
+    document.getElementById('listModal').classList.add('is-active');
+}
+
+async function saveList() {
+    const form = document.getElementById('listForm');
+    const formData = new FormData(form);
+    const id = document.getElementById('listId').value;
+    
+    const data = {
+        name: formData.get('name'),
+        list_type: formData.get('list_type'),
+        description: formData.get('description') || null
+    };
+    
+    const url = id ? `${API_BASE}/wish_lists/${id}` : `${API_BASE}/wish_lists`;
+    const method = id ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, { method, headers, body: JSON.stringify(data) });
+    
+    if (response.ok) {
+        closeListModal();
+        await loadWishLists();
+    } else {
+        const error = await response.json();
+        alert('Erreur: ' + (error.detail || 'Échec de la sauvegarde'));
+    }
+}
+
+async function deleteList(id) {
+    if (!confirm('Voulez-vous vraiment supprimer cette liste et tous ses articles ?')) return;
+    
+    const response = await fetch(`${API_BASE}/wish_lists/${id}`, { method: 'DELETE', headers });
+    
+    if (response.ok) {
+        await loadWishLists();
+    } else {
+        alert('Erreur lors de la suppression');
+    }
+}
+
+function closeListModal() {
+    document.getElementById('listModal').classList.remove('is-active');
+}
+
+// === VUE DÉTAIL ET ARTICLES ===
+
+async function viewListDetails(listId) {
+    currentList = wishLists.find(l => l.id === listId);
+    if (!currentList) return;
+    
+    // Charger les articles
+    const response = await fetch(`${API_BASE}/wish_lists/${listId}/items`, { headers });
+    if (response.ok) {
+        currentItems = await response.json();
+    }
+    
+    // Afficher le modal
+    const typeIcons = { receive: '🎁', give: '🎂', mixed: '🎉' };
+    document.getElementById('detailListIcon').textContent = typeIcons[currentList.list_type];
+    document.getElementById('detailListName').textContent = currentList.name;
+    
+    updateDetailStats();
+    displayItems();
+    
+    document.getElementById('detailModal').classList.add('is-active');
+}
+
+function updateDetailStats() {
+    if (!currentItems) return;
+    
+    const totalItems = currentItems.length;
+    const purchasedItems = currentItems.filter(i => i.is_purchased).length;
+    const percentage = totalItems > 0 ? (purchasedItems / totalItems) * 100 : 0;
+    
+    const totalCost = currentItems.reduce((sum, item) => 
+        sum + (parseFloat(item.price) * item.quantity), 0);
+    const purchasedCost = currentItems.filter(i => i.is_purchased)
+        .reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+    const remainingCost = totalCost - purchasedCost;
+    
+    document.getElementById('detailTotalCost').textContent = `${totalCost.toFixed(2)} €`;
+    document.getElementById('detailPurchasedCost').textContent = `${purchasedCost.toFixed(2)} €`;
+    document.getElementById('detailRemainingCost').textContent = `${remainingCost.toFixed(2)} €`;
+    document.getElementById('detailItemsCount').textContent = `${purchasedItems}/${totalItems}`;
+    document.getElementById('detailProgress').value = percentage;
+}
+
+function displayItems() {
+    const container = document.getElementById('itemsContainer');
+    
+    if (!currentItems || currentItems.length === 0) {
+        container.innerHTML = '<p class="has-text-centered has-text-grey">Aucun article dans cette liste</p>';
+        return;
+    }
+    
+    const priorityColors = { high: 'is-danger', medium: 'is-warning', low: 'is-success' };
+    const priorityLabels = { high: 'Haute', medium: 'Moyenne', low: 'Basse' };
+    
+    const html = `
+        <table class="table is-fullwidth is-hoverable is-striped">
+            <thead>
+                <tr>
+                    <th style="width: 40px;"></th>
+                    <th>Article</th>
+                    <th>Prix</th>
+                    <th>Qté</th>
+                    <th>Priorité</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${currentItems.map(item => `
+                    <tr class="${item.is_purchased ? 'has-text-grey-light' : ''}">
+                        <td>
+                            <input type="checkbox" ${item.is_purchased ? 'checked' : ''} 
+                                   onchange="togglePurchased(${item.id}, this.checked)">
+                        </td>
+                        <td>
+                            <strong class="${item.is_purchased ? 'has-text-grey-light' : ''}" 
+                                    style="${item.is_purchased ? 'text-decoration: line-through;' : ''}">
+                                ${item.name}
+                            </strong>
+                            ${item.description ? `<br><small class="has-text-grey">${item.description}</small>` : ''}
+                            ${item.url ? `<br><a href="${item.url}" target="_blank" class="is-size-7"><i class="fas fa-external-link-alt"></i> Lien</a>` : ''}
+                        </td>
+                        <td>${parseFloat(item.price).toFixed(2)} €</td>
+                        <td>${item.quantity}</td>
+                        <td><span class="tag ${priorityColors[item.priority]}">${priorityLabels[item.priority]}</span></td>
+                        <td>
+                            <div class="buttons are-small">
+                                <button class="button is-info is-light" onclick="editItem(${item.id})">
+                                    <span class="icon"><i class="fas fa-edit"></i></span>
+                                </button>
+                                <button class="button is-danger is-light" onclick="deleteItem(${item.id})">
+                                    <span class="icon"><i class="fas fa-trash"></i></span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    
+    container.innerHTML = html;
+}
+
+function showAddItemModal() {
+    document.getElementById('itemModalTitle').textContent = 'Nouvel article';
+    document.getElementById('itemForm').reset();
+    document.getElementById('itemId').value = '';
+    document.getElementById('itemModal').classList.add('is-active');
+}
+
+async function editItem(itemId) {
+    const item = currentItems.find(i => i.id === itemId);
+    if (!item) return;
+    
+    document.getElementById('itemModalTitle').textContent = 'Modifier l\'article';
+    document.getElementById('itemId').value = item.id;
+    document.querySelector('#itemForm [name="name"]').value = item.name;
+    document.querySelector('#itemForm [name="price"]').value = item.price;
+    document.querySelector('#itemForm [name="quantity"]').value = item.quantity;
+    document.querySelector('#itemForm [name="priority"]').value = item.priority;
+    document.querySelector('#itemForm [name="url"]').value = item.url || '';
+    document.querySelector('#itemForm [name="description"]').value = item.description || '';
+    
+    document.getElementById('itemModal').classList.add('is-active');
+}
+
+async function saveItem() {
+    const form = document.getElementById('itemForm');
+    const formData = new FormData(form);
+    const itemId = document.getElementById('itemId').value;
+    
+    const data = {
+        name: formData.get('name'),
+        price: parseFloat(formData.get('price')),
+        quantity: parseInt(formData.get('quantity')),
+        priority: formData.get('priority'),
+        url: formData.get('url') || null,
+        description: formData.get('description') || null
+    };
+    
+    const url = itemId 
+        ? `${API_BASE}/wish_lists/${currentList.id}/items/${itemId}`
+        : `${API_BASE}/wish_lists/${currentList.id}/items`;
+    const method = itemId ? 'PUT' : 'POST';
+    
+    const response = await fetch(url, { method, headers, body: JSON.stringify(data) });
+    
+    if (response.ok) {
+        closeItemModal();
+        await viewListDetails(currentList.id);
+        await loadWishLists(); // Rafraîchir aussi la liste principale
+    } else {
+        const error = await response.json();
+        alert('Erreur: ' + (error.detail || 'Échec de la sauvegarde'));
+    }
+}
+
+async function togglePurchased(itemId, isPurchased) {
+    const response = await fetch(
+        `${API_BASE}/wish_lists/${currentList.id}/items/${itemId}/purchase`,
+        { 
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ is_purchased: isPurchased })
+        }
+    );
+    
+    if (response.ok) {
+        await viewListDetails(currentList.id);
+        await loadWishLists();
+    } else {
+        alert('Erreur lors de la mise à jour');
+    }
+}
+
+async function deleteItem(itemId) {
+    if (!confirm('Voulez-vous vraiment supprimer cet article ?')) return;
+    
+    const response = await fetch(
+        `${API_BASE}/wish_lists/${currentList.id}/items/${itemId}`,
+        { method: 'DELETE', headers }
+    );
+    
+    if (response.ok) {
+        await viewListDetails(currentList.id);
+        await loadWishLists();
+    } else {
+        alert('Erreur lors de la suppression');
+    }
+}
+
+function closeDetailModal() {
+    document.getElementById('detailModal').classList.remove('is-active');
+    currentList = null;
+    currentItems = [];
+}
+
+function closeItemModal() {
+    document.getElementById('itemModal').classList.remove('is-active');
+}
+</script>
+{% endblock %}

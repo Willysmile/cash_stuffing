@@ -93,11 +93,16 @@
 <script>
 // Configuration globale
 const API_BASE = '/api';
-const token = localStorage.getItem('access_token');
-
-if (!token) {
-    window.location.href = '/auth/login';
+// === MODE TEST : TOKEN FACTICE ===
+const token = localStorage.getItem('access_token') || 'test-mode';
+if (!localStorage.getItem('access_token')) {
+    localStorage.setItem('access_token', 'test-mode');
 }
+
+// Vérification désactivée en mode test
+// if (!token) {
+//     window.location.href = '/auth/login';
+// }
 
 const headers = {
     'Authorization': `Bearer ${token}`,
@@ -107,11 +112,12 @@ const headers = {
 // Fonction pour récupérer les données
 async function fetchData(endpoint) {
     const response = await fetch(`${API_BASE}${endpoint}`, { headers });
-    if (response.status === 401) {
-        localStorage.removeItem('access_token');
-        window.location.href = '/auth/login';
-        return null;
-    }
+    // Désactivé en mode test
+    // if (response.status === 401) {
+    //     localStorage.removeItem('access_token');
+    //     window.location.href = '/auth/login';
+    //     return null;
+    // }
     return response.ok ? response.json() : null;
 }
 

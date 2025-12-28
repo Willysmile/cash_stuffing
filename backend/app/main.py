@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import os
 from pathlib import Path
@@ -13,7 +15,8 @@ from app.routes import (
     bank_accounts_router, 
     envelopes_router, 
     transactions_router, 
-    wish_lists_router
+    wish_lists_router,
+    payees_router
 )
 from app.routes.frontend import router as frontend_router
 
@@ -41,6 +44,18 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# Gestionnaire d'erreurs de validation personnalisé
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Gère les erreurs de validation et affiche des détails"""
+    print(f"❌ Erreur de validation sur {request.method} {request.url.path}")
+    print(f"Détails: {exc.errors()}")
+    print(f"Body reçu: {exc.body}")
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors(), "body": exc.body},
+    )
 
 # Configuration CORS
 app.add_middleware(
@@ -75,6 +90,7 @@ app.include_router(bank_accounts_router, prefix="/api")
 app.include_router(envelopes_router, prefix="/api")
 app.include_router(transactions_router, prefix="/api")
 app.include_router(wish_lists_router, prefix="/api")
+app.include_router(payees_router, prefix="/api")
 
 # === Routes du frontend ===
 app.include_router(frontend_router)

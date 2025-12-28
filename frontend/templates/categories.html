@@ -111,7 +111,11 @@
 
 <script>
 const API_BASE = '/api';
-const token = localStorage.getItem('access_token');
+// === MODE TEST : TOKEN FACTICE ===
+const token = localStorage.getItem('access_token') || 'test-mode';
+if (!localStorage.getItem('access_token')) {
+    localStorage.setItem('access_token', 'test-mode');
+}
 const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
 let categories = [];

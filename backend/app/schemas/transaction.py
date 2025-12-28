@@ -2,8 +2,8 @@
 Schémas Pydantic pour Transaction
 """
 from pydantic import BaseModel, Field, ConfigDict
-from datetime import date, datetime
-from typing import Optional
+from datetime import date as Date, datetime
+from typing import Optional, Union
 from decimal import Decimal
 from enum import Enum
 
@@ -32,9 +32,9 @@ class TransactionBase(BaseModel):
     category_id: int
     amount: Decimal = Field(..., decimal_places=2, description="Montant de la transaction")
     transaction_type: TransactionType
-    date: date
+    date: Date
     description: Optional[str] = Field(None, max_length=255)
-    payee: Optional[str] = Field(None, max_length=100, description="Bénéficiaire ou fournisseur")
+    payee_id: Optional[int] = None
     priority: Optional[TransactionPriority] = None
     is_recurring: bool = False
 
@@ -48,16 +48,16 @@ class TransactionCreate(TransactionBase):
 # Schéma pour la mise à jour
 class TransactionUpdate(BaseModel):
     """Schéma pour mettre à jour une transaction"""
-    bank_account_id: Optional[int] = None
-    envelope_id: Optional[int] = None
-    category_id: Optional[int] = None
-    amount: Optional[Decimal] = Field(None, decimal_places=2)
-    transaction_type: Optional[TransactionType] = None
-    date: Optional[date] = None
-    description: Optional[str] = Field(None, max_length=255)
-    payee: Optional[str] = Field(None, max_length=100)
-    priority: Optional[TransactionPriority] = None
-    is_recurring: Optional[bool] = None
+    bank_account_id: int | None = None
+    envelope_id: int | None = None
+    category_id: int | None = None
+    amount: Decimal | None = None
+    transaction_type: TransactionType | None = None
+    date: Date | None = None
+    description: str | None = None
+    payee_id: int | None = None
+    priority: TransactionPriority | None = None
+    is_recurring: bool | None = None
 
 
 # Schéma pour la lecture
@@ -87,8 +87,8 @@ class TransactionFilter(BaseModel):
     category_id: Optional[int] = None
     transaction_type: Optional[TransactionType] = None
     priority: Optional[TransactionPriority] = None
-    date_from: Optional[date] = None
-    date_to: Optional[date] = None
+    date_from: Optional[Date] = None
+    date_to: Optional[Date] = None
     min_amount: Optional[Decimal] = None
     max_amount: Optional[Decimal] = None
     search: Optional[str] = Field(None, description="Recherche dans description/payee")

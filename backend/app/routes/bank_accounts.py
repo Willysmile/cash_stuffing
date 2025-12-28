@@ -1,8 +1,9 @@
-"""
+"""  
 Routes API pour la gestion des comptes bancaires
 """
 from typing import List, Optional
 from decimal import Decimal
+from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -10,6 +11,8 @@ from sqlalchemy import select, and_
 from app.database import get_db
 from app.models.bank_account import BankAccount
 from app.models.user import User
+from app.models.transaction import Transaction
+from app.models.category import Category
 from app.schemas.bank_account import (
     BankAccountCreate,
     BankAccountUpdate,
@@ -18,7 +21,49 @@ from app.schemas.bank_account import (
 )
 from app.utils.dependencies import get_current_user
 
-router = APIRouter(prefix="/bank-accounts", tags=["Bank Accounts"])
+router = APIRouter(prefix="/bank_accounts", tags=["Bank Accounts"])
+
+
+@router.post("/{account_id}/recalculate", response_model=BankAccountRead)
+async def recalculate_balance(
+    account_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Recalcule le solde d'un compte à partir de son solde initial et de toutes ses transactions"""
+    # Récupérer le compte
+    result = await db.execute(
+        select(BankAccount).where(
+            and_(
+                BankAccount.id == account_id,
+                BankAccount.user_id == current_user.id
+            )
+        )
+    )
+    account = result.scalar_one_or_none()
+    if not account:
+        raise HTTPException(status_code=404, detail="Bank account not found")
+    
+    # Récupérer toutes les transactions du compte
+    result = await db.execute(
+        select(Transaction).where(Transaction.bank_account_id == account_id)
+    )
+    transactions = result.scalars().all()
+    
+    # Calculer le nouveau solde : solde initial + somme des transactions
+    calculated_balance = account.initial_balance
+    for t in transactions:
+        if t.transaction_type == "income":
+            calculated_balance += t.amount
+        elif t.transaction_type == "expense":
+            calculated_balance -= t.amount
+    
+    # Mettre à jour le solde
+    account.current_balance = calculated_balance
+    await db.commit()
+    await db.refresh(account)
+    
+    return account
 
 
 @router.get("", response_model=List[BankAccountRead])
@@ -109,13 +154,15 @@ async def create_bank_account(
     
     Note:
     - Le current_balance est automatiquement initialisé à initial_balance
+    - Une transaction initiale est créée pour enregistrer le solde de départ
     
     Returns:
         Compte créé
     """
     # Créer le compte avec current_balance = initial_balance
     account_dict = account_data.model_dump()
-    account_dict['current_balance'] = account_dict.get('initial_balance', Decimal('0'))
+    initial_balance = account_dict.get('initial_balance', Decimal('0'))
+    account_dict['current_balance'] = initial_balance
     
     new_account = BankAccount(
         **account_dict,
@@ -123,6 +170,46 @@ async def create_bank_account(
     )
     
     db.add(new_account)
+    await db.flush()  # Flush pour obtenir l'ID du compte
+    
+    # Créer une transaction initiale si le solde n'est pas zéro
+    if initial_balance != Decimal('0'):
+        # Récupérer ou créer une catégorie "Solde initial"
+        result = await db.execute(
+            select(Category).where(
+                and_(
+                    Category.user_id == current_user.id,
+                    Category.name == "Solde initial"
+                )
+            )
+        )
+        category = result.scalar_one_or_none()
+        
+        if not category:
+            category = Category(
+                user_id=current_user.id,
+                name="Solde initial",
+                color="#6c757d",
+                icon="fa-flag",
+                is_default=True
+            )
+            db.add(category)
+            await db.flush()
+        
+        # Créer la transaction initiale
+        initial_transaction = Transaction(
+            user_id=current_user.id,
+            bank_account_id=new_account.id,
+            category_id=category.id,
+            amount=abs(initial_balance),
+            transaction_type="income" if initial_balance > 0 else "expense",
+            date=date.today(),
+            description=f"Solde initial du compte {new_account.name}",
+            payee="Système",
+            is_recurring=False
+        )
+        db.add(initial_transaction)
+    
     await db.commit()
     await db.refresh(new_account)
     

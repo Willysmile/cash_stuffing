@@ -31,6 +31,7 @@ class User(Base):
     envelopes = relationship("Envelope", back_populates="user", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
     wish_lists = relationship("WishList", back_populates="user", cascade="all, delete-orphan")
+    payees = relationship("Payee", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}')>"

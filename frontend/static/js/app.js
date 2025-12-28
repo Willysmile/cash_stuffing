@@ -1,5 +1,10 @@
 // Configuration HTMX
 document.addEventListener('DOMContentLoaded', function() {
+    // === MODE TEST : TOKEN FACTICE ===
+    if (!localStorage.getItem('access_token')) {
+        localStorage.setItem('access_token', 'test-mode');
+    }
+    
     // Configuration HTMX globale
     document.body.addEventListener('htmx:configRequest', function(evt) {
         // Ajout du token CSRF aux requêtes HTMX

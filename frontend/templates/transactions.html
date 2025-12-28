@@ -11,6 +11,11 @@
 </section>
 
 <div class="section">
+    <!-- Onglets par compte -->
+    <div class="tabs is-boxed is-medium" id="accountTabs">
+        <ul id="accountTabsList">
+        </ul>
+    </div>
     <div class="columns">
         <div class="column is-3">
             <!-- Filtres -->
@@ -50,17 +55,6 @@
                         <div class="select is-fullwidth">
                             <select id="filterCategory">
                                 <option value="">Toutes</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label class="label">Compte</label>
-                    <div class="control">
-                        <div class="select is-fullwidth">
-                            <select id="filterAccount">
-                                <option value="">Tous</option>
                             </select>
                         </div>
                     </div>
@@ -203,6 +197,20 @@
                 </div>
 
                 <div class="field">
+                    <label class="label">Bénéficiaire</label>
+                    <div class="control has-icons-left">
+                        <div class="select is-fullwidth">
+                            <select name="payee_id" id="modalPayeeSelect">
+                                <option value="">Aucun</option>
+                            </select>
+                        </div>
+                        <span class="icon is-left">
+                            <i class="fas fa-user"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="field">
                     <label class="label">Description</label>
                     <div class="control">
                         <textarea class="textarea" name="description" rows="3"></textarea>
@@ -219,13 +227,19 @@
 
 <script>
 const API_BASE = '/api';
-const token = localStorage.getItem('access_token');
+// === MODE TEST : TOKEN FACTICE ===
+const token = localStorage.getItem('access_token') || 'test-mode';
+if (!localStorage.getItem('access_token')) {
+    localStorage.setItem('access_token', 'test-mode');
+}
 const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
 let transactions = [];
 let categories = [];
 let accounts = [];
 let envelopes = [];
+let payees = [];
+let currentAccountFilter = null; // Filtre actif par compte
 
 // Chargement initial
 async function init() {
@@ -233,7 +247,8 @@ async function init() {
         loadTransactions(),
         loadCategories(),
         loadAccounts(),
-        loadEnvelopes()
+        loadEnvelopes(),
+        loadPayees()
     ]);
     
     // Set date d'aujourd'hui par défaut
@@ -241,9 +256,27 @@ async function init() {
 }
 
 async function loadTransactions() {
-    const response = await fetch(`${API_BASE}/transactions`, { headers });
+    let url = `${API_BASE}/transactions`;
+    if (currentAccountFilter) {
+        url += `?bank_account_id=${currentAccountFilter}`;
+    }
+    const response = await fetch(url, { headers });
     if (response.ok) {
         transactions = await response.json();
+        
+        // Enrichir les transactions avec les noms de catégorie et compte
+        transactions.forEach(t => {
+            const category = categories.find(c => c.id === t.category_id);
+            const account = accounts.find(a => a.id === t.bank_account_id);
+            const envelope = envelopes.find(e => e.id === t.envelope_id);
+            const payee = payees.find(p => p.id === t.payee_id);
+            
+            t.category = category;
+            t.bank_account = account;
+            t.envelope = envelope;
+            t.payee = payee;
+        });
+        
         displayTransactions(transactions);
     }
 }
@@ -261,7 +294,7 @@ async function loadAccounts() {
     const response = await fetch(`${API_BASE}/bank_accounts`, { headers });
     if (response.ok) {
         accounts = await response.json();
-        populateSelect('filterAccount', accounts);
+        displayAccountTabs(accounts);
         populateSelect('modalAccountSelect', accounts);
     }
 }
@@ -271,6 +304,14 @@ async function loadEnvelopes() {
     if (response.ok) {
         envelopes = await response.json();
         populateSelect('modalEnvelopeSelect', envelopes);
+    }
+}
+
+async function loadPayees() {
+    const response = await fetch(`${API_BASE}/payees`, { headers });
+    if (response.ok) {
+        payees = await response.json();
+        populateSelect('modalPayeeSelect', payees);
     }
 }
 
@@ -286,6 +327,54 @@ function populateSelect(selectId, items) {
         option.textContent = item.name;
         select.appendChild(option);
     });
+}
+
+function displayAccountTabs(accountsList) {
+    const tabsList = document.getElementById('accountTabsList');
+    
+    // Vider la liste
+    tabsList.innerHTML = '';
+    
+    // Ajouter un onglet par compte
+    accountsList.forEach((account, index) => {
+        const li = document.createElement('li');
+        li.setAttribute('data-account', account.id);
+        if (index === 0) li.classList.add('is-active'); // Premier onglet actif par défaut
+        
+        const balance = parseFloat(account.current_balance || 0).toFixed(2);
+        const icon = account.icon || 'fa-university';
+        
+        li.innerHTML = `
+            <a onclick="selectAccountTab(${account.id})">
+                <span class="icon"><i class="fas ${icon}"></i></span>
+                <span>${account.name}</span>
+                <span class="tag is-info is-light ml-2">${balance} €</span>
+            </a>
+        `;
+        
+        tabsList.appendChild(li);
+    });
+    
+    // Sélectionner le premier compte par défaut
+    if (accountsList.length > 0) {
+        selectAccountTab(accountsList[0].id);
+    }
+}
+
+function selectAccountTab(accountId) {
+    // Mettre à jour l'onglet actif visuellement
+    const tabs = document.querySelectorAll('#accountTabsList li');
+    tabs.forEach(tab => {
+        if (tab.getAttribute('data-account') == accountId) {
+            tab.classList.add('is-active');
+        } else {
+            tab.classList.remove('is-active');
+        }
+    });
+    
+    // Mettre à jour le filtre et recharger
+    currentAccountFilter = accountId;
+    loadTransactions();
 }
 
 function displayTransactions(data) {
@@ -315,14 +404,14 @@ function displayTransactions(data) {
                         <td>${new Date(t.date).toLocaleDateString('fr-FR')}</td>
                         <td>${t.description || '-'}</td>
                         <td>
-                            <span class="tag ${t.type === 'income' ? 'is-success' : 'is-danger'}">
-                                ${t.type === 'income' ? 'Revenu' : 'Dépense'}
+                            <span class="tag ${t.transaction_type === 'income' ? 'is-success' : 'is-danger'}">
+                                ${t.transaction_type === 'income' ? 'Revenu' : 'Dépense'}
                             </span>
                         </td>
                         <td>${t.category?.name || '-'}</td>
                         <td>${t.bank_account?.name || '-'}</td>
-                        <td class="has-text-right ${t.type === 'income' ? 'has-text-success' : 'has-text-danger'}">
-                            ${t.type === 'income' ? '+' : '-'}${parseFloat(t.amount).toFixed(2)} €
+                        <td class="has-text-right ${t.transaction_type === 'income' ? 'has-text-success' : 'has-text-danger'}">
+                            ${t.transaction_type === 'income' ? '+' : '-'}${parseFloat(t.amount).toFixed(2)} €
                         </td>
                         <td>
                             <div class="buttons are-small">
@@ -348,6 +437,12 @@ function showAddModal() {
     document.getElementById('transactionForm').reset();
     document.getElementById('transactionId').value = '';
     document.querySelector('[name="date"]').value = new Date().toISOString().split('T')[0];
+    
+    // Pré-sélectionner le compte de l'onglet actif si un filtre est actif
+    if (currentAccountFilter) {
+        document.querySelector('[name="bank_account_id"]').value = currentAccountFilter;
+    }
+    
     document.getElementById('transactionModal').classList.add('is-active');
 }
 
@@ -357,13 +452,14 @@ async function editTransaction(id) {
     
     document.getElementById('modalTitle').textContent = 'Modifier la transaction';
     document.getElementById('transactionId').value = transaction.id;
-    document.querySelector('[name="type"][value="' + transaction.type + '"]').checked = true;
+    document.querySelector('[name="type"][value="' + transaction.transaction_type + '"]').checked = true;
     document.querySelector('[name="amount"]').value = transaction.amount;
     document.querySelector('[name="date"]').value = transaction.date;
     document.querySelector('[name="bank_account_id"]').value = transaction.bank_account_id;
     document.querySelector('[name="category_id"]').value = transaction.category_id;
     document.querySelector('[name="envelope_id"]').value = transaction.envelope_id || '';
     document.querySelector('[name="description"]').value = transaction.description || '';
+    document.querySelector('[name="payee_id"]').value = transaction.payee_id || '';
     
     document.getElementById('transactionModal').classList.add('is-active');
 }
@@ -373,14 +469,39 @@ async function saveTransaction() {
     const formData = new FormData(form);
     const id = document.getElementById('transactionId').value;
     
+    // Validation
+    if (!formData.get('type')) {
+        alert('Veuillez sélectionner un type de transaction');
+        return;
+    }
+    if (!formData.get('amount') || isNaN(parseFloat(formData.get('amount')))) {
+        alert('Veuillez saisir un montant valide');
+        return;
+    }
+    if (!formData.get('date')) {
+        alert('Veuillez saisir une date');
+        return;
+    }
+    if (!formData.get('bank_account_id')) {
+        alert('Veuillez sélectionner un compte bancaire');
+        return;
+    }
+    if (!formData.get('category_id')) {
+        alert('Veuillez sélectionner une catégorie');
+        return;
+    }
+    
     const data = {
-        type: formData.get('type'),
+        transaction_type: formData.get('type'),
         amount: parseFloat(formData.get('amount')),
         date: formData.get('date'),
         bank_account_id: parseInt(formData.get('bank_account_id')),
         category_id: parseInt(formData.get('category_id')),
         envelope_id: formData.get('envelope_id') ? parseInt(formData.get('envelope_id')) : null,
-        description: formData.get('description') || null
+        description: formData.get('description') || null,
+        payee_id: formData.get('payee_id') ? parseInt(formData.get('payee_id')) : null,
+        priority: null,
+        is_recurring: false
     };
     
     const url = id ? `${API_BASE}/transactions/${id}` : `${API_BASE}/transactions`;
@@ -427,17 +548,15 @@ function applyFilters() {
     const dateFrom = document.getElementById('filterDateFrom').value;
     const dateTo = document.getElementById('filterDateTo').value;
     const categoryId = document.getElementById('filterCategory').value;
-    const accountId = document.getElementById('filterAccount').value;
     const search = document.getElementById('searchInput').value.toLowerCase();
     
-    if (type) filtered = filtered.filter(t => t.type === type);
+    if (type) filtered = filtered.filter(t => t.transaction_type === type);
     if (dateFrom) filtered = filtered.filter(t => t.date >= dateFrom);
     if (dateTo) filtered = filtered.filter(t => t.date <= dateTo);
     if (categoryId) filtered = filtered.filter(t => t.category_id == categoryId);
-    if (accountId) filtered = filtered.filter(t => t.bank_account_id == accountId);
     if (search) filtered = filtered.filter(t => 
         (t.description || '').toLowerCase().includes(search) ||
-        (t.category?.name || '').toLowerCase().includes(search)
+        (t.payee || '').toLowerCase().includes(search)
     );
     
     displayTransactions(filtered);
@@ -448,7 +567,6 @@ function resetFilters() {
     document.getElementById('filterDateFrom').value = '';
     document.getElementById('filterDateTo').value = '';
     document.getElementById('filterCategory').value = '';
-    document.getElementById('filterAccount').value = '';
     document.getElementById('searchInput').value = '';
     displayTransactions(transactions);
 }

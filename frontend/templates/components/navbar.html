@@ -39,6 +39,10 @@
                         <span class="icon"><i class="fas fa-tags"></i></span>
                         <span>Catégories</span>
                     </a>
+                    <a class="navbar-item" href="/wish-lists">
+                        <span class="icon"><i class="fas fa-gift"></i></span>
+                        <span>Listes de souhaits</span>
+                    </a>
                 </div>
             </div>
 
@@ -93,18 +97,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateNavbar() {
-    const token = localStorage.getItem('access_token');
-    const isAuthenticated = !!token;
+    // === MODE TEST : AUTHENTIFICATION DÉSACTIVÉE ===
+    // Toujours afficher le menu comme si on était connecté
+    const isAuthenticated = true;
     
     // Afficher/masquer les menus selon l'état de connexion
     document.getElementById('authenticatedMenu').style.display = isAuthenticated ? 'contents' : 'none';
     document.getElementById('userMenu').style.display = isAuthenticated ? 'block' : 'none';
     document.getElementById('guestMenu').style.display = isAuthenticated ? 'none' : 'block';
     
-    // Récupérer et afficher l'email de l'utilisateur si connecté
-    if (isAuthenticated) {
-        fetchUserInfo();
-    }
+    // Afficher un email de test
+    document.getElementById('userEmail').textContent = 'Test Mode';
 }
 
 async function fetchUserInfo() {

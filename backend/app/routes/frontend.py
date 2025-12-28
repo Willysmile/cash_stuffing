@@ -15,8 +15,8 @@ router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """Page d'accueil - redirige vers le dashboard si connecté, sinon vers login"""
-    return templates.TemplateResponse("auth/login.html", {"request": request})
+    """Page d'accueil - redirige vers le dashboard (auth temporairement désactivée)"""
+    return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
 @router.get("/auth/login", response_class=HTMLResponse)

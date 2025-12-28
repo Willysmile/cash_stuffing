@@ -20,7 +20,7 @@ from app.schemas.wish_list import (
 from app.utils.dependencies import get_current_user
 
 
-router = APIRouter(prefix="/wish-lists", tags=["wish-lists"])
+router = APIRouter(prefix="/wish_lists", tags=["wish_lists"])
 
 
 @router.get("", response_model=List[WishListRead])

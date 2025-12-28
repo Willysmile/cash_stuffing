@@ -96,7 +96,11 @@
 
 <script>
 const API_BASE = '/api';
-const token = localStorage.getItem('access_token');
+// === MODE TEST : TOKEN FACTICE ===
+const token = localStorage.getItem('access_token') || 'test-mode';
+if (!localStorage.getItem('access_token')) {
+    localStorage.setItem('access_token', 'test-mode');
+}
 const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
 let accounts = [];
@@ -130,7 +134,7 @@ function displayAccounts(data) {
     };
     
     const html = data.map(a => {
-        const balance = parseFloat(a.balance || 0);
+        const balance = parseFloat(a.current_balance || 0);
         const balanceColor = balance >= 0 ? 'has-text-success' : 'has-text-danger';
         
         return `
@@ -209,8 +213,9 @@ async function saveAccount() {
     const data = {
         name: formData.get('name'),
         account_type: formData.get('account_type'),
-        balance: parseFloat(formData.get('balance')) || 0,
-        description: formData.get('description') || null
+        initial_balance: parseFloat(formData.get('balance')) || 0,
+        currency: "EUR",
+        is_active: true
     };
     
     const url = id ? `${API_BASE}/bank_accounts/${id}` : `${API_BASE}/bank_accounts`;

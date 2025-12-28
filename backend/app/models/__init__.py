@@ -8,6 +8,7 @@ from app.models.envelope import Envelope
 from app.models.transaction import Transaction
 from app.models.wish_list import WishList
 from app.models.wish_list_item import WishListItem
+from app.models.payee import Payee
 
 __all__ = [
     "User",
@@ -17,4 +18,5 @@ __all__ = [
     "Transaction",
     "WishList",
     "WishListItem",
+    "Payee",
 ]

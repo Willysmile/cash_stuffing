@@ -148,6 +148,26 @@ async def create_transaction(
     )
     
     db.add(transaction)
+    
+    # Mettre à jour le solde du compte bancaire
+    if transaction_data.transaction_type == "income":
+        bank_account.current_balance += transaction_data.amount
+    elif transaction_data.transaction_type == "expense":
+        bank_account.current_balance -= transaction_data.amount
+    # Pour "transfer" et "adjustment", logique à définir selon besoins
+    
+    # Si une enveloppe est spécifiée, mettre à jour son solde
+    if transaction_data.envelope_id is not None:
+        result = await db.execute(
+            select(Envelope).where(Envelope.id == transaction_data.envelope_id)
+        )
+        envelope = result.scalar_one_or_none()
+        if envelope:
+            if transaction_data.transaction_type == "income":
+                envelope.current_balance += transaction_data.amount
+            elif transaction_data.transaction_type == "expense":
+                envelope.current_balance -= transaction_data.amount
+    
     await db.commit()
     await db.refresh(transaction)
     
@@ -205,8 +225,8 @@ async def update_transaction(
             detail="Transaction not found"
         )
     
-    # Préparer les données à mettre à jour
-    update_data = transaction_data.model_dump(exclude_unset=True)
+    # Préparer les données à mettre à jour (exclure les None, garder tout le reste)
+    update_data = {k: v for k, v in transaction_data.model_dump().items() if v is not None}
     
     # Si le compte bancaire est modifié, vérifier qu'il appartient à l'utilisateur
     if "bank_account_id" in update_data:
@@ -259,9 +279,61 @@ async def update_transaction(
                 detail="Envelope not found"
             )
     
+    # Sauvegarder les anciennes valeurs AVANT modification
+    old_amount = transaction.amount
+    old_transaction_type = transaction.transaction_type
+    old_bank_account_id = transaction.bank_account_id
+    old_envelope_id = transaction.envelope_id
+    
+    # Annuler l'impact de l'ancienne transaction sur les soldes
+    result = await db.execute(
+        select(BankAccount).where(BankAccount.id == old_bank_account_id)
+    )
+    old_bank_account = result.scalar_one_or_none()
+    
+    if old_bank_account:
+        if old_transaction_type == "income":
+            old_bank_account.current_balance -= old_amount
+        elif old_transaction_type == "expense":
+            old_bank_account.current_balance += old_amount
+    
+    if old_envelope_id:
+        result = await db.execute(
+            select(Envelope).where(Envelope.id == old_envelope_id)
+        )
+        old_envelope = result.scalar_one_or_none()
+        if old_envelope:
+            if old_transaction_type == "income":
+                old_envelope.current_balance -= old_amount
+            elif old_transaction_type == "expense":
+                old_envelope.current_balance += old_amount
+    
     # Appliquer les modifications
     for key, value in update_data.items():
         setattr(transaction, key, value)
+    
+    # Appliquer l'impact de la nouvelle transaction
+    result = await db.execute(
+        select(BankAccount).where(BankAccount.id == transaction.bank_account_id)
+    )
+    new_bank_account = result.scalar_one_or_none()
+    
+    if new_bank_account:
+        if transaction.transaction_type == "income":
+            new_bank_account.current_balance += transaction.amount
+        elif transaction.transaction_type == "expense":
+            new_bank_account.current_balance -= transaction.amount
+    
+    if transaction.envelope_id:
+        result = await db.execute(
+            select(Envelope).where(Envelope.id == transaction.envelope_id)
+        )
+        new_envelope = result.scalar_one_or_none()
+        if new_envelope:
+            if transaction.transaction_type == "income":
+                new_envelope.current_balance += transaction.amount
+            elif transaction.transaction_type == "expense":
+                new_envelope.current_balance -= transaction.amount
     
     await db.commit()
     await db.refresh(transaction)
@@ -291,6 +363,29 @@ async def delete_transaction(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Transaction not found"
         )
+    
+    # Annuler l'impact de la transaction sur les soldes
+    result = await db.execute(
+        select(BankAccount).where(BankAccount.id == transaction.bank_account_id)
+    )
+    bank_account = result.scalar_one_or_none()
+    
+    if bank_account:
+        if transaction.transaction_type == "income":
+            bank_account.current_balance -= transaction.amount
+        elif transaction.transaction_type == "expense":
+            bank_account.current_balance += transaction.amount
+    
+    if transaction.envelope_id:
+        result = await db.execute(
+            select(Envelope).where(Envelope.id == transaction.envelope_id)
+        )
+        envelope = result.scalar_one_or_none()
+        if envelope:
+            if transaction.transaction_type == "income":
+                envelope.current_balance -= transaction.amount
+            elif transaction.transaction_type == "expense":
+                envelope.current_balance += transaction.amount
     
     await db.delete(transaction)
     await db.commit()
