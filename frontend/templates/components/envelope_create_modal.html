@@ -1,0 +1,78 @@
+<div class="modal" id="envelope-create-modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head has-background-success">
+      <p class="modal-card-title has-text-white">Nouvelle enveloppe</p>
+      <button class="delete" hx-on="click: this.closest('.modal').classList.remove('is-active')"></button>
+    </header>
+    <section class="modal-card-body">
+      <form>
+        <div class="field">
+          <label class="label">Nom *</label>
+          <div class="control">
+            <input class="input" type="text" name="name" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Objectif (€) *</label>
+          <div class="control">
+            <input class="input" type="number" name="target_amount" step="0.01" min="0" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Catégorie *</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="category_id" required>
+                <option value="">Sélectionnez une catégorie</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Compte bancaire</label>
+          <div class="control">
+            <div class="select is-fullwidth">
+              <select name="bank_account_id">
+                <option value="">💵 Espèces (sans compte)</option>
+                {% for acc in bank_accounts %}
+                  <option value="{{ acc.id }}">{{ acc.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea class="textarea" name="description" rows="3"></textarea>
+          </div>
+        </div>
+      </form>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button" hx-on="click: this.closest('.modal').classList.remove('is-active')">
+        Annuler
+      </button>
+      <button class="button is-success"
+              hx-post="/api/envelopes/htmx"
+              hx-include="closest form"
+              hx-target="#envelopes-container"
+              hx-swap="innerHTML"
+              hx-on="htmx:afterSwap: document.getElementById('envelope-create-modal').classList.remove('is-active')">
+        Créer
+      </button>
+    </footer>
+  </div>
+</div>
+
+<script>
+document.getElementById('envelope-create-modal').classList.add('is-active');
+</script>

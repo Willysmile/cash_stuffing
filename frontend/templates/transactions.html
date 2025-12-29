@@ -3,20 +3,51 @@
 {% block title %}Transactions - Cash Stuffing{% endblock %}
 
 {% block content %}
-<section class="hero is-primary">
+<section class="hero is-info">
     <div class="hero-body">
         <p class="title">Transactions</p>
-        <p class="subtitle">Gérez toutes vos transactions</p>
+        <p class="subtitle">Suivez vos revenus et dépenses</p>
     </div>
 </section>
 
 <div class="section">
-    <!-- Onglets par compte -->
-    <div class="tabs is-boxed is-medium" id="accountTabs">
-        <ul id="accountTabsList">
-        </ul>
+    <div class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <div class="field">
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" id="searchInput" placeholder="Rechercher...">
+                        <span class="icon is-left">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <button class="button is-success" hx-get="/api/transactions/htmx/create" hx-target="#modal-container" hx-swap="innerHTML">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Nouvelle transaction</span>
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="columns">
+
+    <!-- Conteneur pour charger les transactions via HTMX -->
+    <div id="transactions-container"
+         hx-get="/api/transactions/htmx"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Chargement des transactions...</p>
+        </div>
+    </div>
+</div>
+
         <div class="column is-3">
             <!-- Filtres -->
             <div class="box">

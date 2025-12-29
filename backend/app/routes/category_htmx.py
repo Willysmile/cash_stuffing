@@ -20,6 +20,19 @@ templates = Jinja2Templates(directory=str(templates_dir))
 router = APIRouter(prefix="/categories/htmx", tags=["categories-htmx"])
 
 
+@router.get("/create", response_class=HTMLResponse)
+async def create_category_modal(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Modal pour créer une nouvelle catégorie."""
+    return templates.TemplateResponse(
+        "components/category_create_modal.html",
+        {"request": request}
+    )
+
+
 @router.get("", response_class=HTMLResponse)
 async def list_categories_htmx(
     request: Request,

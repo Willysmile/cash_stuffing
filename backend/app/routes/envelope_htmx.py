@@ -23,6 +23,99 @@ templates = Jinja2Templates(directory=str(templates_dir))
 router = APIRouter(prefix="/envelopes/htmx", tags=["envelopes-htmx"])
 
 
+@router.get("", response_class=HTMLResponse)
+async def list_envelopes_htmx(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Liste les enveloppes de l'utilisateur sous forme de cards."""
+    result = await db.execute(
+        select(Envelope)
+        .where(Envelope.user_id == current_user.id)
+        .options(
+            selectinload(Envelope.category),
+            selectinload(Envelope.bank_account)
+        )
+    )
+    envelopes = result.scalars().all()
+    
+    return templates.TemplateResponse(
+        "components/envelope_cards.html",
+        {"request": request, "envelopes": envelopes}
+    )
+
+
+@router.get("/create", response_class=HTMLResponse)
+async def create_envelope_modal(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Modal pour créer une nouvelle enveloppe."""
+    # Récupérer les options pour les selects
+    categories_result = await db.execute(
+        select(Category).where(Category.user_id == current_user.id)
+    )
+    categories = categories_result.scalars().all()
+    
+    bank_accounts_result = await db.execute(
+        select(BankAccount).where(BankAccount.user_id == current_user.id)
+    )
+    bank_accounts = bank_accounts_result.scalars().all()
+    
+    return templates.TemplateResponse(
+        "components/envelope_create_modal.html",
+        {
+            "request": request,
+            "categories": categories,
+            "bank_accounts": bank_accounts
+        }
+    )
+
+
+@router.post("", response_class=HTMLResponse)
+async def create_envelope_htmx(
+    name: str,
+    target_amount: float,
+    category_id: int,
+    bank_account_id: int = None,
+    description: str = None,
+    request: Request = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Crée une nouvelle enveloppe."""
+    try:
+        envelope = Envelope(
+            user_id=current_user.id,
+            name=name,
+            target_amount=Decimal(str(target_amount)),
+            category_id=category_id,
+            bank_account_id=bank_account_id,
+            description=description
+        )
+        db.add(envelope)
+        await db.commit()
+        
+        result = await db.execute(
+            select(Envelope)
+            .where(Envelope.user_id == current_user.id)
+            .options(
+                selectinload(Envelope.category),
+                selectinload(Envelope.bank_account)
+            )
+        )
+        envelopes = result.scalars().all()
+        
+        return templates.TemplateResponse(
+            "components/envelope_cards.html",
+            {"request": request, "envelopes": envelopes}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.post("/{envelope_id}/adjust", response_class=HTMLResponse)
 async def adjust_envelope_htmx(
     envelope_id: int,

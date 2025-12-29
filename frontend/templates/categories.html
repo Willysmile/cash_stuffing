@@ -6,16 +6,27 @@
 <section class="hero is-warning">
     <div class="hero-body">
         <p class="title">Catégories</p>
-        <p class="subtitle">Organisez vos dépenses et revenus</p>
+        <p class="subtitle">Organisez vos catégories</p>
     </div>
 </section>
 
 <div class="section">
     <div class="level">
-        <div class="level-left"></div>
+        <div class="level-left">
+            <div class="level-item">
+                <div class="field">
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" id="searchInput" placeholder="Rechercher...">
+                        <span class="icon is-left">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="level-right">
             <div class="level-item">
-                <button class="button is-warning" onclick="showAddModal()">
+                <button class="button is-warning" hx-get="/api/categories/htmx/create" hx-target="#modal-container" hx-swap="innerHTML">
                     <span class="icon"><i class="fas fa-plus"></i></span>
                     <span>Nouvelle catégorie</span>
                 </button>
@@ -23,32 +34,32 @@
         </div>
     </div>
 
-    <div class="columns">
-        <div class="column">
-            <div class="box">
-                <h2 class="title is-5">
-                    <span class="icon has-text-success">
-                        <i class="fas fa-arrow-up"></i>
-                    </span>
-                    Catégories de revenus
-                </h2>
-                <div id="incomeCategories">
-                    <p class="has-text-centered">Chargement...</p>
-                </div>
-            </div>
+    <!-- Conteneur pour charger les catégories via HTMX -->
+    <div id="categories-container"
+         hx-get="/api/categories/htmx"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Chargement des catégories...</p>
         </div>
+    </div>
+</div>
 
-        <div class="column">
-            <div class="box">
-                <h2 class="title is-5">
-                    <span class="icon has-text-danger">
-                        <i class="fas fa-arrow-down"></i>
-                    </span>
-                    Catégories de dépenses
-                </h2>
-                <div id="expenseCategories">
-                    <p class="has-text-centered">Chargement...</p>
-                </div>
+<script>
+// Recherche en temps réel
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#categories-container tbody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}
             </div>
         </div>
     </div>
