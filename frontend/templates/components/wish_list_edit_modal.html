@@ -1,0 +1,43 @@
+<div class="modal" id="wish-list-edit-modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Éditer la liste</p>
+      <button class="delete" hx-on="click: this.closest('.modal').classList.remove('is-active')"></button>
+    </header>
+    <section class="modal-card-body">
+      <form>
+        <div class="field">
+          <label class="label">Nom</label>
+          <div class="control">
+            <input class="input" type="text" name="name" value="{{ wish_list.name }}" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Description</label>
+          <div class="control">
+            <textarea class="textarea" name="description">{{ wish_list.description or '' }}</textarea>
+          </div>
+        </div>
+      </form>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button" hx-on="click: this.closest('.modal').classList.remove('is-active')">
+        Annuler
+      </button>
+      <button class="button is-success"
+              hx-put="/api/wish-lists/{{ wish_list.id }}"
+              hx-include="closest form"
+              hx-target="#wish-lists-tbody"
+              hx-swap="innerHTML"
+              hx-on="htmx:afterSwap: document.getElementById('wish-list-edit-modal').classList.remove('is-active')">
+        Enregistrer
+      </button>
+    </footer>
+  </div>
+</div>
+
+<script>
+document.getElementById('wish-list-edit-modal').classList.add('is-active');
+</script>

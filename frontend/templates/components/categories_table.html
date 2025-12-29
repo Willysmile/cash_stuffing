@@ -1,0 +1,36 @@
+<table class="table is-fullwidth is-hoverable">
+  <thead>
+    <tr>
+      <th>Nom</th>
+      <th>Couleur</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="categories-tbody">
+    {% for category in categories %}
+      <tr>
+        <td>{{ category.name }}</td>
+        <td>
+          <span class="tag" style="background-color: {{ category.color }};">
+            {{ category.color }}
+          </span>
+        </td>
+        <td>
+          <button class="button is-small is-info"
+                  hx-get="/api/categories/{{ category.id }}/edit"
+                  hx-target="#modal-container"
+                  hx-swap="innerHTML">
+            ✏️ Éditer
+          </button>
+          <button class="button is-small is-danger"
+                  hx-delete="/api/categories/{{ category.id }}"
+                  hx-target="#categories-tbody"
+                  hx-swap="innerHTML"
+                  hx-confirm="Êtes-vous sûr de vouloir supprimer cette catégorie ?">
+            🗑️ Supprimer
+          </button>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

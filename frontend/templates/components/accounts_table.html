@@ -1,0 +1,34 @@
+<table class="table is-fullwidth is-hoverable">
+  <thead>
+    <tr>
+      <th>Nom</th>
+      <th>Numéro de compte</th>
+      <th>Solde</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="accounts-tbody">
+    {% for account in accounts %}
+      <tr>
+        <td>{{ account.name }}</td>
+        <td>{{ account.account_number or '-' }}</td>
+        <td class="has-text-weight-bold">{{ "%.2f"|format(account.balance) }} €</td>
+        <td>
+          <button class="button is-small is-info"
+                  hx-get="/api/bank-accounts/{{ account.id }}/edit"
+                  hx-target="#modal-container"
+                  hx-swap="innerHTML">
+            ✏️ Éditer
+          </button>
+          <button class="button is-small is-danger"
+                  hx-delete="/api/bank-accounts/{{ account.id }}"
+                  hx-target="#accounts-tbody"
+                  hx-swap="innerHTML"
+                  hx-confirm="Êtes-vous sûr de vouloir supprimer ce compte ?">
+            🗑️ Supprimer
+          </button>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

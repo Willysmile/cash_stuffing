@@ -20,6 +20,10 @@ from app.routes import (
 )
 from app.routes.envelope_htmx import router as envelope_htmx_router
 from app.routes.transaction_htmx import router as transaction_htmx_router
+from app.routes.category_htmx import router as category_htmx_router
+from app.routes.bank_account_htmx import router as bank_account_htmx_router
+from app.routes.wish_list_htmx import router as wish_list_htmx_router
+from app.routes.dashboard_htmx import router as dashboard_htmx_router
 from app.routes.frontend import router as frontend_router
 
 # Configuration des chemins
@@ -93,7 +97,11 @@ app.include_router(envelopes_router, prefix="/api")
 app.include_router(envelope_htmx_router, prefix="/api")
 app.include_router(transactions_router, prefix="/api")
 app.include_router(transaction_htmx_router, prefix="/api")
+app.include_router(category_htmx_router, prefix="/api")
+app.include_router(bank_account_htmx_router, prefix="/api")
 app.include_router(wish_lists_router, prefix="/api")
+app.include_router(wish_list_htmx_router, prefix="/api")
+app.include_router(dashboard_htmx_router, prefix="/api")
 app.include_router(payees_router, prefix="/api")
 
 # === Routes du frontend ===

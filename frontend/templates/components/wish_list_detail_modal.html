@@ -1,0 +1,81 @@
+<div class="modal" id="wish-list-detail-modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">{{ wish_list.name }}</p>
+      <button class="delete" hx-on="click: this.closest('.modal').classList.remove('is-active')"></button>
+    </header>
+    <section class="modal-card-body">
+      {% if wish_list.description %}
+        <div class="content">
+          <p>{{ wish_list.description }}</p>
+        </div>
+      {% endif %}
+
+      <div class="table-container">
+        <table class="table is-fullwidth is-striped">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Priorité</th>
+              <th>Prix</th>
+              <th>Statut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in wish_list.items %}
+              <tr>
+                <td>
+                  <strong>{{ item.name }}</strong>
+                  {% if item.product_url %}
+                    <br><a href="{{ item.product_url }}" target="_blank" class="is-size-7">Lien produit</a>
+                  {% endif %}
+                  {% if item.product_image_url %}
+                    <br><img src="{{ item.product_image_url }}" alt="{{ item.name }}" style="max-height: 50px;">
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="tag {% if item.priority == 'must_have' %}is-danger{% elif item.priority == 'wanted' %}is-warning{% else %}is-info{% endif %}">
+                    {{ item.priority }}
+                  </span>
+                </td>
+                <td>{{ item.estimated_price or '-' }} €</td>
+                <td>
+                  {% if item.is_purchased %}
+                    <span class="tag is-success">✓ Acheté</span>
+                  {% else %}
+                    <span class="tag">À acheter</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <button class="button is-small {% if item.is_purchased %}is-warning{% else %}is-success{% endif %}"
+                          hx-patch="/api/wish-lists/{{ wish_list.id }}/items/{{ item.id }}/purchase"
+                          hx-target="#wish-list-detail-modal"
+                          hx-swap="outerHTML">
+                    {% if item.is_purchased %}🔄 Annuler{% else %}✓ Acheté{% endif %}
+                  </button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button" hx-on="click: this.closest('.modal').classList.remove('is-active')">
+        Fermer
+      </button>
+      <button class="button is-primary"
+              hx-get="/api/wish-lists/{{ wish_list.id }}/edit"
+              hx-target="#modal-container"
+              hx-swap="innerHTML">
+        ✏️ Éditer
+      </button>
+    </footer>
+  </div>
+</div>
+
+<script>
+document.getElementById('wish-list-detail-modal').classList.add('is-active');
+</script>
