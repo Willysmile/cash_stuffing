@@ -184,7 +184,7 @@
                 <div class="field">
                     <label class="label">Nom de l'article *</label>
                     <div class="control has-icons-left">
-                        <input class="input" type="text" name="name" placeholder="PlayStation 5" required>
+                        <input class="input" type="text" name="name" placeholder="PlayStation 5" required maxlength="200" minlength="1">
                         <span class="icon is-left">
                             <i class="fas fa-gift"></i>
                         </span>
@@ -196,7 +196,7 @@
                         <div class="field">
                             <label class="label">Prix (€) *</label>
                             <div class="control has-icons-left">
-                                <input class="input" type="number" step="0.01" min="0" name="price" placeholder="550.00" required>
+                                <input class="input" type="number" step="0.01" min="0" max="999999.99" name="price" placeholder="550.00" required>
                                 <span class="icon is-left">
                                     <i class="fas fa-euro-sign"></i>
                                 </span>
@@ -207,7 +207,7 @@
                         <div class="field">
                             <label class="label">Quantité *</label>
                             <div class="control">
-                                <input class="input" type="number" min="1" name="quantity" value="1" required>
+                                <input class="input" type="number" min="1" max="9999" name="quantity" value="1" required>
                             </div>
                         </div>
                     </div>
@@ -218,9 +218,9 @@
                     <div class="control">
                         <div class="select is-fullwidth">
                             <select name="priority" required>
-                                <option value="medium">Moyenne</option>
-                                <option value="high">Haute</option>
-                                <option value="low">Basse</option>
+                                <option value="must_have">Indispensable</option>
+                                <option value="wanted" selected>Souhaité</option>
+                                <option value="bonus">Bonus</option>
                             </select>
                         </div>
                     </div>
@@ -229,17 +229,18 @@
                 <div class="field">
                     <label class="label">URL (lien produit)</label>
                     <div class="control has-icons-left">
-                        <input class="input" type="url" name="url" placeholder="https://www.amazon.fr/...">
+                        <input class="input" type="text" name="url" placeholder="https://www.amazon.fr/..." maxlength="500">
                         <span class="icon is-left">
                             <i class="fas fa-link"></i>
                         </span>
                     </div>
+                    <p class="help">Optionnel - lien vers le produit</p>
                 </div>
 
                 <div class="field">
                     <label class="label">Description</label>
                     <div class="control">
-                        <textarea class="textarea" name="description" rows="2"></textarea>
+                        <textarea class="textarea" name="description" rows="2" maxlength="1000"></textarea>
                     </div>
                 </div>
             </form>
@@ -565,15 +566,23 @@ async function editItem(itemId) {
 async function saveItem() {
     const form = document.getElementById('itemForm');
     const formData = new FormData(form);
+    
+    // Validation
+    const errors = validateItemForm(formData);
+    if (errors.length > 0) {
+        showValidationErrors(errors);
+        return;
+    }
+    
     const itemId = document.getElementById('itemId').value;
     
     const data = {
-        name: formData.get('name'),
+        name: formData.get('name').trim(),
         price: parseFloat(formData.get('price')),
         quantity: parseInt(formData.get('quantity')),
         priority: formData.get('priority'),
-        url: formData.get('url') || null,
-        description: formData.get('description') || null
+        url: formData.get('url').trim() || null,
+        description: formData.get('description').trim() || null
     };
     
     const url = itemId 
@@ -589,8 +598,93 @@ async function saveItem() {
         await loadWishLists(); // Rafraîchir aussi la liste principale
     } else {
         const error = await response.json();
-        alert('Erreur: ' + (error.detail || 'Échec de la sauvegarde'));
+        showValidationErrors(['Erreur de sauvegarde: ' + (error.detail || 'Échec de la sauvegarde')]);
     }
+}
+
+function validateItemForm(formData) {
+    const errors = [];
+    
+    // Regex pour URL
+    const URL_REGEX = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+    
+    // Nom
+    const name = formData.get('name').trim();
+    if (!name) {
+        errors.push('Le nom de l\'article est obligatoire');
+    } else if (name.length > 200) {
+        errors.push('Le nom ne doit pas dépasser 200 caractères');
+    }
+    
+    // Prix
+    const price = parseFloat(formData.get('price'));
+    if (!formData.get('price') || isNaN(price)) {
+        errors.push('Le prix est obligatoire');
+    } else if (price < 0) {
+        errors.push('Le prix ne peut pas être négatif');
+    } else if (price > 999999.99) {
+        errors.push('Le prix ne peut pas dépasser 999999.99€');
+    }
+    
+    // Quantité
+    const quantity = parseInt(formData.get('quantity'));
+    if (!formData.get('quantity') || isNaN(quantity)) {
+        errors.push('La quantité est obligatoire');
+    } else if (quantity < 1) {
+        errors.push('La quantité doit être au moins 1');
+    } else if (quantity > 9999) {
+        errors.push('La quantité ne peut pas dépasser 9999');
+    }
+    
+    // Priorité
+    const priority = formData.get('priority');
+    if (!priority) {
+        errors.push('La priorité est obligatoire');
+    } else if (!['must_have', 'wanted', 'bonus'].includes(priority)) {
+        errors.push('Priorité invalide');
+    }
+    
+    // URL (optionnel mais validation)
+    const url = formData.get('url').trim();
+    if (url && url.length > 500) {
+        errors.push('L\'URL ne doit pas dépasser 500 caractères');
+    } else if (url && !URL_REGEX.test(url)) {
+        errors.push('L\'URL n\'est pas valide (ex: https://www.amazon.fr/...)');
+    }
+    
+    // Description (optionnel mais validation)
+    const description = formData.get('description').trim();
+    if (description && description.length > 1000) {
+        errors.push('La description ne doit pas dépasser 1000 caractères');
+    }
+    
+    return errors;
+}
+
+function showValidationErrors(errors) {
+    const errorHtml = errors.map(err => `<li>${err}</li>`).join('');
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal is-active';
+    modal.innerHTML = `
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head has-background-danger">
+                <p class="modal-card-title has-text-white">⚠️ Erreurs de validation</p>
+                <button class="delete" onclick="this.closest('.modal').remove()"></button>
+            </header>
+            <section class="modal-card-body">
+                <ul class="content">
+                    ${errorHtml}
+                </ul>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-danger" onclick="this.closest('.modal').remove()">Fermer</button>
+            </footer>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
 }
 
 async function togglePurchased(itemId, isPurchased) {

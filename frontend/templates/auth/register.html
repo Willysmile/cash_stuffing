@@ -77,11 +77,36 @@
 </div>
 
 <script>
+// Regex pour validation d'email
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateEmail(email) {
+    return EMAIL_REGEX.test(email);
+}
+
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    const email = formData.get('email').trim();
     const password = formData.get('password');
     const passwordConfirm = formData.get('password_confirm');
+    const fullName = formData.get('full_name').trim();
+    
+    // Validations
+    if (!fullName || fullName.length < 2) {
+        alert('Le nom complet doit contenir au moins 2 caractères');
+        return;
+    }
+    
+    if (!email || !validateEmail(email)) {
+        alert('Veuillez entrer une adresse email valide (ex: user@example.com)');
+        return;
+    }
+    
+    if (!password || password.length < 8) {
+        alert('Le mot de passe doit contenir au moins 8 caractères');
+        return;
+    }
     
     if (password !== passwordConfirm) {
         alert('Les mots de passe ne correspondent pas');
@@ -89,9 +114,9 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     }
     
     const data = {
-        email: formData.get('email'),
+        email: email,
         password: password,
-        full_name: formData.get('full_name')
+        full_name: fullName
     };
     
     try {

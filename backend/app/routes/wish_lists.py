@@ -202,14 +202,10 @@ async def create_wish_list_item(
             detail="Wish list not found"
         )
     
-    # Vérifier que le wish_list_id dans item_data correspond
-    if item_data.wish_list_id != wish_list_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Wish list ID mismatch"
-        )
-    
-    item = WishListItem(**item_data.model_dump())
+    # Créer l'item avec le wish_list_id de l'URL
+    item_dict = item_data.model_dump()
+    item_dict['wish_list_id'] = wish_list_id
+    item = WishListItem(**item_dict)
     
     db.add(item)
     await db.commit()

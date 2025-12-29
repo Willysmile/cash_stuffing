@@ -80,8 +80,8 @@ class WishListItemBase(BaseModel):
     description: Optional[str] = None
     price: Decimal = Field(..., ge=0, decimal_places=2)
     quantity: int = Field(default=1, ge=1)
-    url: Optional[HttpUrl] = None
-    image_url: Optional[HttpUrl] = None
+    url: Optional[str] = Field(None, max_length=500)
+    image_url: Optional[str] = Field(None, max_length=500)
     priority: ItemPriority = ItemPriority.WANTED
     status: ItemStatus = ItemStatus.TO_BUY
     recipient: Optional[str] = Field(None, max_length=100, description="Pour listes 'to_give'")
@@ -89,8 +89,8 @@ class WishListItemBase(BaseModel):
 
 
 class WishListItemCreate(WishListItemBase):
-    """Schéma pour créer un article"""
-    wish_list_id: int
+    """Schéma pour créer un article (wish_list_id fourni dans l'URL)"""
+    pass
 
 
 class WishListItemUpdate(BaseModel):
@@ -99,8 +99,8 @@ class WishListItemUpdate(BaseModel):
     description: Optional[str] = None
     price: Optional[Decimal] = Field(None, ge=0, decimal_places=2)
     quantity: Optional[int] = Field(None, ge=1)
-    url: Optional[HttpUrl] = None
-    image_url: Optional[HttpUrl] = None
+    url: Optional[str] = Field(None, max_length=500)
+    image_url: Optional[str] = Field(None, max_length=500)
     priority: Optional[ItemPriority] = None
     status: Optional[ItemStatus] = None
     recipient: Optional[str] = Field(None, max_length=100)
