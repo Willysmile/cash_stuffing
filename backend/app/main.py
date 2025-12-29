@@ -19,6 +19,7 @@ from app.routes import (
     payees_router
 )
 from app.routes.envelope_htmx import router as envelope_htmx_router
+from app.routes.transaction_htmx import router as transaction_htmx_router
 from app.routes.frontend import router as frontend_router
 
 # Configuration des chemins
@@ -91,6 +92,7 @@ app.include_router(bank_accounts_router, prefix="/api")
 app.include_router(envelopes_router, prefix="/api")
 app.include_router(envelope_htmx_router, prefix="/api")
 app.include_router(transactions_router, prefix="/api")
+app.include_router(transaction_htmx_router, prefix="/api")
 app.include_router(wish_lists_router, prefix="/api")
 app.include_router(payees_router, prefix="/api")
 

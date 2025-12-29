@@ -1,0 +1,52 @@
+{# Modal de détail d'une transaction #}
+<div class="modal is-active">
+    <div class="modal-background" onclick="this.closest('.modal').remove()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head has-background-link">
+            <p class="modal-card-title has-text-white">{{ tx.description }}</p>
+            <button class="delete" onclick="this.closest('.modal').remove()"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="columns">
+                <div class="column is-half">
+                    <p><strong>Montant :</strong></p>
+                    <p class="title is-4 {% if tx.type == 'income' %}has-text-success{% else %}has-text-danger{% endif %}">
+                        {{ '+' if tx.type == 'income' else '-' }}{{ "%.2f"|format(tx.amount) }} €
+                    </p>
+                </div>
+                <div class="column is-half">
+                    <p><strong>Date :</strong> {{ tx.date.strftime('%d/%m/%Y') }}</p>
+                    <p><strong>Type :</strong> {{ 'Revenu' if tx.type == 'income' else 'Dépense' }}</p>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="columns">
+                <div class="column is-half">
+                    {% if tx.category %}
+                    <p><strong>Catégorie :</strong></p>
+                    <span class="tag">{{ tx.category.name }}</span>
+                    {% endif %}
+                </div>
+                <div class="column is-half">
+                    <p><strong>Compte :</strong> {{ tx.bank_account.name if tx.bank_account else 'Espèces' }}</p>
+                </div>
+            </div>
+
+            {% if tx.envelope %}
+            <hr>
+            <p><strong>Enveloppe :</strong> {{ tx.envelope.name }}</p>
+            {% endif %}
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-warning" 
+                    hx-get="/api/transactions/{{ tx.id }}/edit"
+                    hx-target=".modal-card"
+                    hx-swap="outerHTML">
+                Modifier
+            </button>
+            <button class="button" onclick="this.closest('.modal').remove()">Fermer</button>
+        </footer>
+    </div>
+</div>
