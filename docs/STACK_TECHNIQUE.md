@@ -1,8 +1,19 @@
 # Stack Technique - Application Cash Stuffing
 
+## 🎯 Stack choisie : HTMX + Alpine.js + Bulma
+
+**Combinaison optimale pour MVP moderne :**
+- Backend API : FastAPI
+- Frontend : HTMX 1.9.10 + Alpine.js 3.x + Bulma 0.9.4
+- Templating : Jinja2
+- CSS : Bulma (CDN)
+- Interaction : HTMX pour AJAX + Alpine.js pour réactivité
+
+---
+
 ## Vue d'ensemble
 
-Stack moderne et simple pour une application web évolutive vers mobile.
+Stack moderne, simple et productive pour une application web évolutive.
 
 ---
 
@@ -16,7 +27,7 @@ Stack moderne et simple pour une application web évolutive vers mobile.
 - ✅ Async natif
 - ✅ Type hints obligatoires (moins de bugs)
 - ✅ Courbe d'apprentissage modérée
-- ✅ Parfait pour API REST/JSON
+- ✅ Parfait pour API REST + HTML fragments
 
 ### Base de données
 **SQLite** (fichier unique)
@@ -24,10 +35,7 @@ Stack moderne et simple pour une application web évolutive vers mobile.
 - ✅ Fichier portable (.db)
 - ✅ Parfait pour démarrer
 - ✅ Support jusqu'à 100k+ transactions
-- ✅ Migration vers PostgreSQL facile si besoi## Technologies envisagées
-- Backend: FastAPI
-- Base de données: SQLite (fichier unique)
-- Frontend: À définir (web d'abord, mobile plus tard)n
+- ✅ Migration vers PostgreSQL facile si besoin
 - ⚠️ Limitation : pas de concurrence massive (suffisant pour usage perso/petit groupe)
 
 **SQLAlchemy 2.0** (ORM)
@@ -59,45 +67,208 @@ Stack moderne et simple pour une application web évolutive vers mobile.
 
 ---
 
-## Frontend (Version Web)
+## Frontend (Web)
 
-### Option 1 : HTMX + Alpine.js (Recommandé pour MVP)
-**HTMX 1.9+**
-- ✅ Simplicité maximale
-- ✅ HTML dynamique sans JavaScript complexe
-- ✅ Pas de build, pas de compilation
-- ✅ Parfait avec FastAPI (renvoie du HTML)
-- ✅ Interactions fluides (AJAX invisible)
+### ✅ Stack adoptée : HTMX + Alpine.js + Bulma
 
-**Alpine.js 3.x**
-- ✅ Framework JS ultra-léger (15kb)
-- ✅ Réactivité simple dans le HTML
-- ✅ Parfait complément à HTMX
-- ✅ Pas de build requis
+**Pourquoi cette combinaison ?**
+1. **Zero build process** - HTML/CSS/JS livré directement
+2. **Développement rapide** - Itération en <100ms
+3. **Performance** - Aucun overhead
+4. **Apprentissage facile** - Peu de concepts
+5. **Maintenance** - Code lisible et prévisible
 
-**Bulma CSS**
-- ✅ Framework CSS moderne et élégant
-- ✅ Classes sémantiques (`.button .is-primary`)
-- ✅ Aucun JavaScript inclus (parfait avec HTMX)
-- ✅ Composants riches (navbar, cards, modals, forms, etc.)
-- ✅ Grid system flexbox puissant
+#### HTMX 1.9.10
+**Objectif** : Requêtes AJAX déclaratives en HTML
+
+```html
+<!-- Avant: JavaScript complexe -->
+<!-- Après: Attribut HTMX simple -->
+<button hx-get="/api/envelopes/1/detail"
+        hx-target="#modal-container"
+        hx-swap="innerHTML">
+    Voir détails
+</button>
+```
+
+**Avantages:**
+- ✅ Requêtes AJAX directement dans le HTML
+- ✅ Pas besoin de JavaScript côté client pour les interactions basiques
+- ✅ Backend retourne des **fragments HTML** (Jinja2)
+- ✅ Mise à jour du DOM complètement déclarative
+- ✅ Pas de fetch() manuel, pas d'event listeners
+- ✅ Intégration native avec FastAPI
+
+**Patterns utilisés:**
+- `hx-get/post/put/delete` - Méthode HTTP
+- `hx-target` - Où mettre le résultat
+- `hx-swap` - Comment intégrer (innerHTML, outerHTML, etc.)
+- `hx-trigger` - Quand déclencher (change, input, etc.)
+- `hx-confirm` - Confirmation avant action
+
+**Exemple: Ajuster un montant**
+```html
+<form hx-post="/api/envelopes/{{ id }}/adjust"
+      hx-target="#envelope-{{ id }}"
+      hx-swap="outerHTML">
+    <input type="number" name="amount" />
+    <button name="direction" value="1">+ Ajouter</button>
+    <button name="direction" value="-1">- Retirer</button>
+</form>
+```
+
+Le backend retourne le composant mis à jour, HTMX le remplace.
+
+#### Alpine.js 3.x
+**Objectif** : Réactivité et logique côté client légère
+
+```html
+<!-- Logique déclarative dans le HTML -->
+<div x-data="{ open: false }">
+    <button @click="open = !open">Toggle</button>
+    <div x-show="open">Contenu</div>
+</div>
+```
+
+**Avantages:**
+- ✅ Ultra-léger (15kb minifié)
+- ✅ Réactivité déclarative dans HTML
+- ✅ Pas de compilation, pas d'import/export
+- ✅ Parfait pour UI simple (modales, collapse, tabs)
+- ✅ Complément idéal à HTMX
+
+**Patterns utilisés:**
+- `x-data` - Initialiser l'état réactif
+- `x-show/x-if` - Afficher/masquer conditionnellement
+- `@click/@input/@change` - Event listeners
+- `x-bind` - Binding d'attributs
+- `:class` - Classes conditionnelles
+
+**Exemple: Modal avec Alpine**
+```html
+<div x-data="{ open: false }">
+    <button @click="open = true">Ouvrir</button>
+    <div x-show="open" class="modal">
+        <p x-text="message"></p>
+        <button @click="open = false">Fermer</button>
+    </div>
+</div>
+```
+
+#### Division des responsabilités
+
+| Logique | Technologie | Exemple |
+|---------|------------|---------|
+| **Navigation/AJAX** | HTMX | Charger list, détail, formulaire |
+| **Réactivité légère** | Alpine.js | Modales, toggles, collapsible |
+| **Layout/Styling** | Bulma + CSS | Grid, cards, colors, typography |
+| **Logique métier/calcul** | FastAPI (Backend) | Validation, calculs, persistence |
+
+#### Bulma CSS 0.9.4
+**Objectif** : Design moderne sans JavaScript
+
+```html
+<div class="columns">
+    <div class="column is-one-third">
+        <div class="card">
+            <div class="card-content">
+                <p class="title">Titre</p>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+**Avantages:**
+- ✅ Framework CSS complet (zéro JavaScript inclus)
+- ✅ Classes sémantiques et prévisibles
+- ✅ Grid system moderne (Flexbox)
+- ✅ Composants riches (cards, buttons, navbar, modals, etc.)
 - ✅ Responsive par défaut
-- ✅ Plus lisible que Tailwind (moins de classes)
-- ✅ Facile à personnaliser (Sass variables)
-- ✅ CDN simple, aucun build requis
+- ✅ Couleurs cohérentes et customisables
+- ✅ Support des icônes Font Awesome
 
-**Chart.js** pour les graphiques
-- Léger et simple
-- Graphiques interactifs
-- Bien documenté
+**Composants utilisés:**
+- `navbar` - Barre de navigation
+- `card` - Cartes de contenu
+- `modal` - Modales (classiques HTML)
+- `button` - Boutons stylisés
+- `form` / `field` / `control` - Formulaires
+- `table` - Tables
+- `progress` - Barres de progression
+- `tag` / `badge` - Tags et badges
 
-### Option 2 : React + Vite (Si préférence SPA)
-**React 18+**
-- ✅ Écosystème mature
-- ✅ Réutilisable pour React Native
-- ✅ Component-based
-- ❌ Plus complexe
-- ❌ Build nécessaire
+**Couleurs:**
+- `.is-primary` (bleu), `.is-success` (vert), `.is-warning` (jaune), `.is-danger` (rouge)
+- `.is-info`, `.is-light`, `.is-dark`
+
+#### Jinja2 Templating
+**Objectif** : Dynamique côté serveur
+
+```html
+<!-- Dans une template .html -->
+{% for envelope in envelopes %}
+<div class="card">
+    <h2>{{ envelope.name }}</h2>
+    <progress value="{{ envelope.current_balance }}" 
+              max="{{ envelope.target_amount }}">
+    </progress>
+</div>
+{% endfor %}
+```
+
+FastAPI retourne des templates rendues, HTMX les injecte dans le DOM.
+
+### Architecture Frontend
+
+```
+templates/
+├── base.html                 # Layout principal avec scripts HTMX/Alpine
+├── dashboard.html            # Page d'accueil
+├── envelopes.html           # Liste enveloppes
+├── envelopes_htmx.html      # Version HTMX (fragments)
+├── transactions.html        # Liste transactions
+├── categories.html          # Gestion catégories
+├── wish_lists.html          # Listes de souhaits
+└── components/
+    ├── navbar.html          # Barre de navigation
+    ├── envelope_cards.html  # Card envelope (réutilisable)
+    ├── envelope_detail_modal.html   # Modal détail (HTMX)
+    └── envelope_edit_modal.html     # Modal édition (HTMX)
+```
+
+### Flux d'interaction type
+
+```
+1. Utilisateur clique sur bouton HTMX
+   <button hx-post="/api/envelopes/1/adjust">
+
+2. HTMX intercepte, envoie requête POST
+   POST /api/envelopes/1/adjust
+   { amount: 50, direction: 1 }
+
+3. FastAPI traite, retourne fragment HTML
+   <div class="card">
+     <p>Solde: 150€</p>
+     ...
+   </div>
+
+4. HTMX injecte dans le DOM
+   hx-target="#envelope-1"
+   hx-swap="outerHTML"
+
+5. (Optionnel) Alpine.js ajoute de la réactivité
+   x-data="{ animate: true }"
+```
+
+### Performance
+- **Temps de chargement** : ~500ms (template rendering)
+- **TTFB** : ~50-100ms (FastAPI très rapide)
+- **AJAX requests** : ~200-300ms (fragment seul)
+- **Bundle size** : ~50kb (HTMX + Alpine) vs 200kb+ pour React
+- **First paint** : Immédiate (pas de build)
+
+---
 
 **Vite**
 - Build ultra-rapide

@@ -1,15 +1,19 @@
 {% for envelope in envelopes %}
-<div class="column is-4">
+<div class="column is-4" id="envelope-{{ envelope.id }}">
     <div class="card">
         <header class="card-header {% if envelope.current_balance|float >= envelope.target_amount|float %}has-background-success{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.75) %}has-background-info{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.5) %}has-background-warning{% else %}has-background-danger{% endif %}">
             <p class="card-header-title has-text-white" 
                style="cursor: pointer;"
-               @click="viewEnvelopeDetails({{ envelope.id }})">
+               hx-get="/envelopes/{{ envelope.id }}/detail"
+               hx-target="#modal-container"
+               hx-swap="innerHTML">
                 {{ envelope.name }}
             </p>
             <button class="card-header-icon has-text-white" 
                     title="Modifier"
-                    @click="editEnvelope({{ envelope.id }})">
+                    hx-get="/envelopes/{{ envelope.id }}/edit"
+                    hx-target="#modal-container"
+                    hx-swap="innerHTML">
                 <span class="icon">
                     <i class="fas fa-edit"></i>
                 </span>
@@ -67,33 +71,47 @@
                 <span class="tag is-warning mt-2">Inactive</span>
                 {% endif %}
 
-                <!-- Formulaire ajustement montant -->
+                <!-- Formulaire ajustement montant avec HTMX -->
                 <div class="mt-4 pt-4" style="border-top: 1px solid #dbdbdb;">
-                    <div class="field has-addons" style="max-width: 300px;">
-                        <p class="control">
-                            <button class="button is-danger" 
-                                    @click="submitAdjustmentDirect({{ envelope.id }}, -1)"
-                                    title="Retirer de l'argent">
-                                <span class="icon"><i class="fas fa-minus"></i></span>
-                            </button>
-                        </p>
-                        <p class="control is-expanded">
-                            <input class="input" 
-                                   x-bind:id="'amount-{{ envelope.id }}'"
-                                   type="number" 
-                                   step="0.01" 
-                                   min="0.01"
-                                   placeholder="Montant"
-                                   @keyup.enter="submitAdjustmentDirect({{ envelope.id }}, 1)">
-                        </p>
-                        <p class="control">
-                            <button class="button is-success" 
-                                    @click="submitAdjustmentDirect({{ envelope.id }}, 1)"
-                                    title="Ajouter de l'argent">
-                                <span class="icon"><i class="fas fa-plus"></i></span>
-                            </button>
-                        </p>
-                    </div>
+                    <form hx-post="/api/envelopes/{{ envelope.id }}/adjust"
+                          hx-target="#envelope-{{ envelope.id }}"
+                          hx-swap="outerHTML"
+                          hx-on::after-request="
+                              if(event.detail.xhr.status === 200) {
+                                  document.querySelector('input[id=amount-{{ envelope.id }}]').value = '';
+                              }
+                          ">
+                        <div class="field has-addons" style="max-width: 300px;">
+                            <p class="control">
+                                <button class="button is-danger" 
+                                        type="submit"
+                                        name="direction"
+                                        value="-1"
+                                        title="Retirer de l'argent">
+                                    <span class="icon"><i class="fas fa-minus"></i></span>
+                                </button>
+                            </p>
+                            <p class="control is-expanded">
+                                <input class="input" 
+                                       id="amount-{{ envelope.id }}"
+                                       type="number" 
+                                       name="amount"
+                                       step="0.01" 
+                                       min="0.01"
+                                       placeholder="Montant"
+                                       required>
+                            </p>
+                            <p class="control">
+                                <button class="button is-success" 
+                                        type="submit"
+                                        name="direction"
+                                        value="1"
+                                        title="Ajouter de l'argent">
+                                    <span class="icon"><i class="fas fa-plus"></i></span>
+                                </button>
+                            </p>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

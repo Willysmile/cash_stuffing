@@ -1,0 +1,63 @@
+{# Modale de détail d'une enveloppe avec historique #}
+<div class="modal is-active">
+    <div class="modal-background" onclick="this.closest('.modal').remove()"></div>
+    <div class="modal-card">
+        <header class="modal-card-head has-background-link">
+            <p class="modal-card-title has-text-white">{{ envelope.name }}</p>
+            <button class="delete" onclick="this.closest('.modal').remove()"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="columns">
+                <div class="column is-half">
+                    <p><strong>Objectif :</strong> {{ "%.2f"|format(envelope.target_amount) }} €</p>
+                    <p><strong>Solde actuel :</strong> {{ "%.2f"|format(envelope.current_balance) }} €</p>
+                    {% if envelope.description %}
+                    <p><strong>Description :</strong></p>
+                    <p class="has-text-grey">{{ envelope.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="column is-half">
+                    {% if envelope.category %}
+                    <p><strong>Catégorie :</strong> {{ envelope.category.name }}</p>
+                    {% endif %}
+                    {% if envelope.bank_account %}
+                    <p><strong>Compte :</strong> {{ envelope.bank_account.name }}</p>
+                    {% else %}
+                    <p><strong>Type :</strong> Espèces</p>
+                    {% endif %}
+                    {% if not envelope.is_active %}
+                    <span class="tag is-warning">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if history %}
+            <hr>
+            <h5 class="title is-5">Historique récent</h5>
+            <table class="table is-fullwidth is-striped is-hoverable">
+                <thead>
+                    <tr>
+                        <th>Montant</th>
+                        <th>Solde après</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in history %}
+                    <tr>
+                        <td class="{% if entry.amount >= 0 %}has-text-success{% else %}has-text-danger{% endif %}">
+                            {{ entry.amount if entry.amount < 0 else '+' }}{{ "%.2f"|format(entry.amount) }} €
+                        </td>
+                        <td>{{ "%.2f"|format(entry.balance_after) }} €</td>
+                        <td>{{ entry.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button" onclick="this.closest('.modal').remove()">Fermer</button>
+        </footer>
+    </div>
+</div>
