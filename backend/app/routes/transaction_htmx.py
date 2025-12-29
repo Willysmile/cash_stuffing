@@ -24,6 +24,40 @@ templates = Jinja2Templates(directory=str(templates_dir))
 router = APIRouter(prefix="/transactions/htmx", tags=["transactions-htmx"])
 
 
+@router.get("/create", response_class=HTMLResponse)
+async def create_transaction_modal(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Modal pour créer une nouvelle transaction."""
+    # Récupérer les options pour les selects
+    categories_result = await db.execute(
+        select(Category).where(Category.user_id == current_user.id)
+    )
+    categories = categories_result.scalars().all()
+    
+    bank_accounts_result = await db.execute(
+        select(BankAccount).where(BankAccount.user_id == current_user.id)
+    )
+    bank_accounts = bank_accounts_result.scalars().all()
+    
+    envelopes_result = await db.execute(
+        select(Envelope).where(Envelope.user_id == current_user.id)
+    )
+    envelopes = envelopes_result.scalars().all()
+    
+    return templates.TemplateResponse(
+        "components/transaction_create_modal.html",
+        {
+            "request": request,
+            "categories": categories,
+            "bank_accounts": bank_accounts,
+            "envelopes": envelopes
+        }
+    )
+
+
 @router.get("", response_class=HTMLResponse)
 async def list_transactions_htmx(
     bank_account_id: Optional[int] = Query(None),

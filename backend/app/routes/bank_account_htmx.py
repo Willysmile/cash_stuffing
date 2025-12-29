@@ -20,6 +20,19 @@ templates = Jinja2Templates(directory=str(templates_dir))
 router = APIRouter(prefix="/bank-accounts/htmx", tags=["accounts-htmx"])
 
 
+@router.get("/create", response_class=HTMLResponse)
+async def create_account_modal(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Modal pour créer un nouveau compte bancaire."""
+    return templates.TemplateResponse(
+        "components/account_create_modal.html",
+        {"request": request}
+    )
+
+
 @router.get("", response_class=HTMLResponse)
 async def list_accounts_htmx(
     request: Request,
@@ -36,6 +49,39 @@ async def list_accounts_htmx(
         "components/accounts_table.html",
         {"request": request, "accounts": accounts}
     )
+
+
+@router.post("", response_class=HTMLResponse)
+async def create_account_htmx(
+    name: str,
+    account_number: str = None,
+    balance: float = 0,
+    request: Request = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Crée un nouveau compte bancaire."""
+    try:
+        account = BankAccount(
+            user_id=current_user.id,
+            name=name,
+            account_number=account_number,
+            balance=Decimal(str(balance))
+        )
+        db.add(account)
+        await db.commit()
+        
+        result = await db.execute(
+            select(BankAccount).where(BankAccount.user_id == current_user.id)
+        )
+        accounts = result.scalars().all()
+        
+        return templates.TemplateResponse(
+            "components/accounts_table.html",
+            {"request": request, "accounts": accounts}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("", response_class=HTMLResponse)

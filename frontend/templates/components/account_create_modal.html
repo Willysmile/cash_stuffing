@@ -1,0 +1,50 @@
+<div class="modal" id="account-create-modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head has-background-success">
+      <p class="modal-card-title has-text-white">Nouveau compte</p>
+      <button class="delete" hx-on="click: this.closest('.modal').classList.remove('is-active')"></button>
+    </header>
+    <section class="modal-card-body">
+      <form>
+        <div class="field">
+          <label class="label">Nom *</label>
+          <div class="control">
+            <input class="input" type="text" name="name" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Numéro de compte</label>
+          <div class="control">
+            <input class="input" type="text" name="account_number">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Solde initial (€)</label>
+          <div class="control">
+            <input class="input" type="number" name="balance" step="0.01" value="0">
+          </div>
+        </div>
+      </form>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button" hx-on="click: this.closest('.modal').classList.remove('is-active')">
+        Annuler
+      </button>
+      <button class="button is-success"
+              hx-post="/api/bank-accounts/htmx"
+              hx-include="closest form"
+              hx-target="#accounts-tbody"
+              hx-swap="innerHTML"
+              hx-on="htmx:afterSwap: document.getElementById('account-create-modal').classList.remove('is-active')">
+        Créer
+      </button>
+    </footer>
+  </div>
+</div>
+
+<script>
+document.getElementById('account-create-modal').classList.add('is-active');
+</script>

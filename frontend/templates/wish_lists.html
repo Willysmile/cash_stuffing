@@ -11,44 +11,55 @@
 </section>
 
 <div class="section">
-    <!-- Filtres et actions -->
     <div class="level">
         <div class="level-left">
             <div class="level-item">
-                <div class="field has-addons">
-                    <div class="control">
-                        <div class="select">
-                            <select id="filterType">
-                                <option value="">Tous les types</option>
-                                <option value="to_receive">🎁 À recevoir</option>
-                                <option value="to_give">🎂 À offrir</option>
-                                <option value="mixed">🎉 Mixte</option>
-                            </select>
-                        </div>
+                <div class="field">
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" id="searchInput" placeholder="Rechercher...">
+                        <span class="icon is-left">
+                            <i class="fas fa-search"></i>
+                        </span>
                     </div>
-                    <div class="control">
-                        <button class="button" onclick="applyFilters()">
-                            <span class="icon"><i class="fas fa-filter"></i></span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="level-item">
-                <div class="control has-icons-left">
-                    <input class="input" type="text" id="searchInput" placeholder="Rechercher une liste...">
-                    <span class="icon is-left">
-                        <i class="fas fa-search"></i>
-                    </span>
                 </div>
             </div>
         </div>
         <div class="level-right">
             <div class="level-item">
-                <button class="button is-link" onclick="showCreateListModal()">
+                <button class="button is-link" hx-get="/api/wish-lists/htmx/create" hx-target="#modal-container" hx-swap="innerHTML">
                     <span class="icon"><i class="fas fa-plus"></i></span>
                     <span>Nouvelle liste</span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Conteneur pour charger les listes via HTMX -->
+    <div id="wish-lists-container"
+         hx-get="/api/wish-lists/htmx"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Chargement des listes...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Recherche en temps réel
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#wish-lists-container tbody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}
         </div>
     </div>
 

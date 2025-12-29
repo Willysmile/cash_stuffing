@@ -12,10 +12,21 @@
 
 <div class="section">
     <div class="level">
-        <div class="level-left"></div>
+        <div class="level-left">
+            <div class="level-item">
+                <div class="field">
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" id="searchInput" placeholder="Rechercher...">
+                        <span class="icon is-left">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="level-right">
             <div class="level-item">
-                <button class="button is-success" onclick="showAddModal()">
+                <button class="button is-success" hx-get="/api/bank-accounts/htmx/create" hx-target="#modal-container" hx-swap="innerHTML">
                     <span class="icon"><i class="fas fa-plus"></i></span>
                     <span>Nouveau compte</span>
                 </button>
@@ -23,32 +34,32 @@
         </div>
     </div>
 
-    <div class="columns is-multiline" id="accountsList">
-        <div class="column is-12 has-text-centered">
+    <!-- Conteneur pour charger les comptes via HTMX -->
+    <div id="accounts-container"
+         hx-get="/api/bank-accounts/htmx"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="has-text-centered">
             <span class="icon is-large">
                 <i class="fas fa-spinner fa-pulse fa-2x"></i>
             </span>
-            <p>Chargement...</p>
+            <p>Chargement des comptes...</p>
         </div>
     </div>
 </div>
 
-<!-- Modal d'ajout/édition -->
-<div class="modal" id="accountModal">
-    <div class="modal-background" onclick="closeModal()"></div>
-    <div class="modal-card">
-        <header class="modal-card-head">
-            <p class="modal-card-title" id="modalTitle">Nouveau compte</p>
-            <button class="delete" onclick="closeModal()"></button>
-        </header>
-        <section class="modal-card-body">
-            <form id="accountForm">
-                <input type="hidden" id="accountId">
-                
-                <div class="field">
-                    <label class="label">Nom du compte *</label>
-                    <div class="control has-icons-left">
-                        <input class="input" type="text" name="name" placeholder="Compte courant" required>
+<script>
+// Recherche en temps réel
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#accounts-container tbody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %} placeholder="Compte courant" required>
                         <span class="icon is-left">
                             <i class="fas fa-university"></i>
                         </span>

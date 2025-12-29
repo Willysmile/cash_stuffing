@@ -78,6 +78,33 @@ async def create_category_htmx(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("", response_class=HTMLResponse)
+async def create_category_htmx(
+    name: str,
+    color: str = "#3273dc",
+    request: Request = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Crée une nouvelle catégorie."""
+    try:
+        category = Category(user_id=current_user.id, name=name, color=color)
+        db.add(category)
+        await db.commit()
+        
+        result = await db.execute(
+            select(Category).where(Category.user_id == current_user.id)
+        )
+        categories = result.scalars().all()
+        
+        return templates.TemplateResponse(
+            "components/categories_table.html",
+            {"request": request, "categories": categories}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("/{category_id}/edit", response_class=HTMLResponse)
 async def category_edit_modal(
     category_id: int,

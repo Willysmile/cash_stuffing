@@ -1,5 +1,43 @@
 {% extends "base.html" %}
 
+{% block title %}Dashboard - Cash Stuffing{% endblock %}
+
+{% block content %}
+<section class="hero is-light">
+    <div class="hero-body">
+        <p class="title">Dashboard</p>
+        <p class="subtitle">Vue d'ensemble de vos finances</p>
+    </div>
+</section>
+
+<div class="section">
+    <!-- Stats et enveloppes -->
+    <div hx-get="/api/dashboard/htmx/stats"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Chargement du dashboard...</p>
+        </div>
+    </div>
+
+    <!-- Transactions récentes -->
+    <div style="margin-top: 2rem;"
+         hx-get="/api/dashboard/htmx/recent-transactions"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Chargement des transactions...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
 {% block title %}Tableau de bord - Cash Stuffing{% endblock %}
 
 {% block content %}

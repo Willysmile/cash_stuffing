@@ -20,6 +20,52 @@ templates = Jinja2Templates(directory=str(templates_dir))
 router = APIRouter(prefix="/wish-lists/htmx", tags=["wish-lists-htmx"])
 
 
+@router.get("/create", response_class=HTMLResponse)
+async def create_wish_list_modal(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Modal pour créer une nouvelle liste de souhaits."""
+    return templates.TemplateResponse(
+        "components/wish_list_create_modal.html",
+        {"request": request}
+    )
+
+
+@router.post("", response_class=HTMLResponse)
+async def create_wish_list_htmx(
+    name: str,
+    description: str = "",
+    request: Request = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Crée une nouvelle liste de souhaits."""
+    try:
+        wish_list = WishList(
+            user_id=current_user.id,
+            name=name,
+            description=description
+        )
+        db.add(wish_list)
+        await db.commit()
+        
+        result = await db.execute(
+            select(WishList)
+            .where(WishList.user_id == current_user.id)
+            .options(selectinload(WishList.items))
+        )
+        wish_lists = result.scalars().all()
+        
+        return templates.TemplateResponse(
+            "components/wish_lists_table.html",
+            {"request": request, "wish_lists": wish_lists}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("", response_class=HTMLResponse)
 async def list_wish_lists_htmx(
     request: Request,
