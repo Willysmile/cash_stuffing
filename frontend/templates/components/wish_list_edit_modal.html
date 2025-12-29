@@ -27,7 +27,7 @@
         Annuler
       </button>
       <button class="button is-success"
-              hx-put="/api/wish-lists/{{ wish_list.id }}"
+              hx-put="/api/wish-lists/htmx/{{ wish_list.id }}"
               hx-include="closest form"
               hx-target="#wish-lists-tbody"
               hx-swap="innerHTML"

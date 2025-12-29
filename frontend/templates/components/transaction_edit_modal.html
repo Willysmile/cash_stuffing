@@ -7,7 +7,7 @@
             <button class="delete" onclick="this.closest('.modal').remove()"></button>
         </header>
         <section class="modal-card-body">
-            <form hx-put="/api/transactions/{{ tx.id }}"
+            <form hx-put="/api/transactions/htmx/{{ tx.id }}"
                   hx-target="closest .modal"
                   hx-swap="outerHTML"
                   hx-on::after-request="

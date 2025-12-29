@@ -34,7 +34,7 @@
         Annuler
       </button>
       <button class="button is-success"
-              hx-put="/api/bank-accounts/{{ account.id }}"
+              hx-put="/api/bank-accounts/htmx/{{ account.id }}"
               hx-include="closest form"
               hx-target="#accounts-tbody"
               hx-swap="innerHTML"

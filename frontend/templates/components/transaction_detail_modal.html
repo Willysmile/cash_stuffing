@@ -41,7 +41,7 @@
         </section>
         <footer class="modal-card-foot">
             <button class="button is-warning" 
-                    hx-get="/api/transactions/{{ tx.id }}/edit"
+                    hx-get="/api/transactions/htmx/{{ tx.id }}/edit"
                     hx-target=".modal-card"
                     hx-swap="outerHTML">
                 Modifier

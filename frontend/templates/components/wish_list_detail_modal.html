@@ -50,7 +50,7 @@
                 </td>
                 <td>
                   <button class="button is-small {% if item.is_purchased %}is-warning{% else %}is-success{% endif %}"
-                          hx-patch="/api/wish-lists/{{ wish_list.id }}/items/{{ item.id }}/purchase"
+                          hx-patch="/api/wish-lists/htmx/{{ wish_list.id }}/items/{{ item.id }}/purchase"
                           hx-target="#wish-list-detail-modal"
                           hx-swap="outerHTML">
                     {% if item.is_purchased %}🔄 Annuler{% else %}✓ Acheté{% endif %}
@@ -67,7 +67,7 @@
         Fermer
       </button>
       <button class="button is-primary"
-              hx-get="/api/wish-lists/{{ wish_list.id }}/edit"
+              hx-get="/api/wish-lists/htmx/{{ wish_list.id }}/edit"
               hx-target="#modal-container"
               hx-swap="innerHTML">
         ✏️ Éditer

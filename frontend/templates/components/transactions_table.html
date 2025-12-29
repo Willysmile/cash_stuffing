@@ -34,19 +34,19 @@
                     <td>
                         <div class="buttons are-small">
                             <button class="button is-info is-light"
-                                    hx-get="/api/transactions/{{ tx.id }}/detail"
+                                    hx-get="/api/transactions/htmx/{{ tx.id }}/detail"
                                     hx-target="#modal-container"
                                     hx-swap="innerHTML">
                                 <span class="icon"><i class="fas fa-eye"></i></span>
                             </button>
                             <button class="button is-warning is-light"
-                                    hx-get="/api/transactions/{{ tx.id }}/edit"
+                                    hx-get="/api/transactions/htmx/{{ tx.id }}/edit"
                                     hx-target="#modal-container"
                                     hx-swap="innerHTML">
                                 <span class="icon"><i class="fas fa-edit"></i></span>
                             </button>
                             <button class="button is-danger is-light"
-                                    hx-delete="/api/transactions/{{ tx.id }}"
+                                    hx-delete="/api/transactions/htmx/{{ tx.id }}"
                                     hx-target="#transactions-table-container"
                                     hx-swap="outerHTML"
                                     hx-confirm="Êtes-vous sûr ?">

@@ -4,14 +4,14 @@
         <header class="card-header {% if envelope.current_balance|float >= envelope.target_amount|float %}has-background-success{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.75) %}has-background-info{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.5) %}has-background-warning{% else %}has-background-danger{% endif %}">
             <p class="card-header-title has-text-white" 
                style="cursor: pointer;"
-               hx-get="/envelopes/{{ envelope.id }}/detail"
+               hx-get="/api/envelopes/htmx/{{ envelope.id }}/detail"
                hx-target="#modal-container"
                hx-swap="innerHTML">
                 {{ envelope.name }}
             </p>
             <button class="card-header-icon has-text-white" 
                     title="Modifier"
-                    hx-get="/envelopes/{{ envelope.id }}/edit"
+                    hx-get="/api/envelopes/htmx/{{ envelope.id }}/edit"
                     hx-target="#modal-container"
                     hx-swap="innerHTML">
                 <span class="icon">

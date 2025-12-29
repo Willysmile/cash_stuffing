@@ -17,13 +17,13 @@
         </td>
         <td>
           <button class="button is-small is-info"
-                  hx-get="/api/categories/{{ category.id }}/edit"
+                  hx-get="/api/categories/htmx/{{ category.id }}/edit"
                   hx-target="#modal-container"
                   hx-swap="innerHTML">
             ✏️ Éditer
           </button>
           <button class="button is-small is-danger"
-                  hx-delete="/api/categories/{{ category.id }}"
+                  hx-delete="/api/categories/htmx/{{ category.id }}"
                   hx-target="#categories-tbody"
                   hx-swap="innerHTML"
                   hx-confirm="Êtes-vous sûr de vouloir supprimer cette catégorie ?">

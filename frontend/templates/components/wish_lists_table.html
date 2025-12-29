@@ -18,19 +18,19 @@
         </td>
         <td>
           <button class="button is-small is-info"
-                  hx-get="/api/wish-lists/{{ wish_list.id }}/detail"
+                  hx-get="/api/wish-lists/htmx/{{ wish_list.id }}/detail"
                   hx-target="#modal-container"
                   hx-swap="innerHTML">
             👁️ Voir
           </button>
           <button class="button is-small is-primary"
-                  hx-get="/api/wish-lists/{{ wish_list.id }}/edit"
+                  hx-get="/api/wish-lists/htmx/{{ wish_list.id }}/edit"
                   hx-target="#modal-container"
                   hx-swap="innerHTML">
             ✏️ Éditer
           </button>
           <button class="button is-small is-danger"
-                  hx-delete="/api/wish-lists/{{ wish_list.id }}"
+                  hx-delete="/api/wish-lists/htmx/{{ wish_list.id }}"
                   hx-target="#wish-lists-tbody"
                   hx-swap="innerHTML"
                   hx-confirm="Êtes-vous sûr de vouloir supprimer cette liste ?">

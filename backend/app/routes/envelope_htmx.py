@@ -20,7 +20,7 @@ from app.utils.dependencies import get_current_user
 templates_dir = Path(__file__).parent.parent.parent.parent / "frontend" / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
 
-router = APIRouter(prefix="/envelopes", tags=["envelopes-htmx"])
+router = APIRouter(prefix="/envelopes/htmx", tags=["envelopes-htmx"])
 
 
 @router.post("/{envelope_id}/adjust", response_class=HTMLResponse)

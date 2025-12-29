@@ -17,7 +17,7 @@ from app.utils.dependencies import get_current_user
 templates_dir = Path(__file__).parent.parent.parent.parent / "frontend" / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
 
-router = APIRouter(prefix="/categories", tags=["categories-htmx"])
+router = APIRouter(prefix="/categories/htmx", tags=["categories-htmx"])
 
 
 @router.get("", response_class=HTMLResponse)

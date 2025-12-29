@@ -27,7 +27,7 @@
         Annuler
       </button>
       <button class="button is-success"
-              hx-put="/api/categories/{{ category.id }}"
+              hx-put="/api/categories/htmx/{{ category.id }}"
               hx-include="closest form"
               hx-target="#categories-tbody"
               hx-swap="innerHTML"
