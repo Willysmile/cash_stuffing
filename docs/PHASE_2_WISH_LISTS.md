@@ -249,8 +249,8 @@ Priority = "low" | "medium" | "high"
       <td>PlayStation 5</td>
       <td>550€</td>
       <td>1</td>
-      <td><span class="tag is-danger">High</span></td>
-      <td>...</td>
+      <td><span class="tag is-danger">must_have</span></td>
+      <td>[✎ Éditer] [✕ Supprimer]</td>
     </tr>
   </tbody>
 </table>
@@ -259,12 +259,34 @@ Priority = "low" | "medium" | "high"
 ### 4. Modal d'ajout/édition d'article
 
 **Champs** :
-- Nom* (text)
-- Prix (number, step=0.01)
-- Quantité (number, min=1, default=1)
-- Priorité* (select: low/medium/high)
-- URL (url, optionnel)
-- Description (textarea)
+- Nom* (text, 1-200 caractères) - Obligatoire
+- Prix (number, 0-999999.99€) - Obligatoire, positif
+- Quantité (number, 1-9999) - Obligatoire, minimum 1
+- Priorité* (select: must_have/wanted/bonus) - Obligatoire
+- URL (text, 0-500 caractères) - Optionnel, validation regex
+- Description (textarea, 0-1000 caractères) - Optionnel
+
+**Validation côté client** :
+```javascript
+// Regex URL
+const URL_REGEX = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+
+// Champs validés avant soumission
+- name: 1-200 caractères, obligatoire
+- price: 0-999999.99€, obligatoire
+- quantity: 1-9999, obligatoire
+- priority: must_have | wanted | bonus
+- url: optionnel, max 500 chars, regex validation
+- description: optionnel, max 1000 chars
+```
+
+**Messages d'erreur** :
+- Modale rouge "⚠️ Erreurs de validation"
+- Liste détaillée de tous les problèmes
+- Exemples:
+  - "Le nom de l'article est obligatoire"
+  - "Le prix ne peut pas être négatif"
+  - "L'URL n'est pas valide (ex: https://www.amazon.fr/...)"
 
 ---
 
