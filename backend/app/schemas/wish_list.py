@@ -107,6 +107,11 @@ class WishListItemUpdate(BaseModel):
     sort_order: Optional[int] = None
 
 
+class WishListItemPurchaseToggle(BaseModel):
+    """Schéma pour toggler l'état acheté d'un article"""
+    is_purchased: bool = Field(..., description="Marquer comme acheté ou non")
+
+
 class WishListItemRead(WishListItemBase):
     """Schéma pour lire un article"""
     id: int
@@ -117,6 +122,11 @@ class WishListItemRead(WishListItemBase):
     updated_at: Optional[datetime] = None
     
     model_config = ConfigDict(from_attributes=True)
+    
+    @property
+    def is_purchased(self) -> bool:
+        """Propriété calculée pour faciliter le frontend"""
+        return self.status == ItemStatus.PURCHASED
 
 
 # === Schemas avec relations ===

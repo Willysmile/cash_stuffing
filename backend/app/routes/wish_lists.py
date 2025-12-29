@@ -15,6 +15,7 @@ from app.models.user import User
 from app.schemas.wish_list import (
     WishListCreate, WishListUpdate, WishListRead, WishListWithItems,
     WishListItemCreate, WishListItemUpdate, WishListItemRead,
+    WishListItemPurchaseToggle,
     WishListType, WishListStatus, ItemStatus
 )
 from app.utils.dependencies import get_current_user
@@ -356,5 +357,54 @@ async def mark_item_as_purchased(
     
     await db.commit()
     await db.refresh(item)
+    
+    return item
+
+@router.patch("/wish_lists/{wish_list_id}/items/{item_id}/purchase", response_model=WishListItemRead)
+async def toggle_item_purchased(
+    wish_list_id: int,
+    item_id: int,
+    data: WishListItemPurchaseToggle,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Toggle l'état acheté d'un article."""
+    from datetime import date
+    
+    # Récupérer l'article avec vérification d'ownership
+    result = await db.execute(
+        select(WishListItem)
+        .join(WishList)
+        .where(
+            and_(
+                WishListItem.id == item_id,
+                WishListItem.wish_list_id == wish_list_id,
+                WishList.user_id == current_user.id
+            )
+        )
+    )
+    item = result.scalar_one_or_none()
+    
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Item not found"
+        )
+    
+    # Récupérer is_purchased depuis le body
+    is_purchased = data.is_purchased
+    
+    if is_purchased:
+        item.status = "purchased"
+        item.purchased_date = date.today()
+    else:
+        item.status = "to_buy"
+        item.purchased_date = None
+    
+    await db.commit()
+    await db.refresh(item)
+    
+    return item
+
     
     return item
