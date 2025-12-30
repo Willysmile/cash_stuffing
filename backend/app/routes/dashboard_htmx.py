@@ -28,9 +28,9 @@ async def dashboard_stats(
     current_user: User = Depends(get_current_user)
 ):
     """Retourne les statistiques du dashboard."""
-    # Total des enveloppes
+    # Total des enveloppes (target_amount)
     envelopes_result = await db.execute(
-        select(func.sum(Envelope.allocated_amount)).where(
+        select(func.sum(Envelope.target_amount)).where(
             Envelope.user_id == current_user.id
         )
     )
@@ -38,7 +38,7 @@ async def dashboard_stats(
 
     # Solde total des comptes
     accounts_result = await db.execute(
-        select(func.sum(BankAccount.balance)).where(
+        select(func.sum(BankAccount.current_balance)).where(
             BankAccount.user_id == current_user.id
         )
     )

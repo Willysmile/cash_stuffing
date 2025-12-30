@@ -113,7 +113,7 @@ async def get_envelopes_html(
     )
 
 
-@router.get("/{envelope_id}", response_model=EnvelopeRead)
+@router.get("/{envelope_id:int}", response_model=EnvelopeRead)
 async def get_envelope(
     envelope_id: int,
     current_user: User = Depends(get_current_user),
@@ -198,7 +198,7 @@ async def create_envelope(
     return envelope
 
 
-@router.put("/{envelope_id}", response_model=EnvelopeRead)
+@router.put("/{envelope_id:int}", response_model=EnvelopeRead)
 async def update_envelope(
     envelope_id: int,
     envelope_data: EnvelopeUpdate,
@@ -269,7 +269,7 @@ async def update_envelope(
     return envelope
 
 
-@router.delete("/{envelope_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{envelope_id:int}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_envelope(
     envelope_id: int,
     current_user: User = Depends(get_current_user),
@@ -310,7 +310,7 @@ async def delete_envelope(
     return None
 
 
-@router.post("/{envelope_id}/reallocate", response_model=EnvelopeRead)
+@router.post("/{envelope_id:int}/reallocate", response_model=EnvelopeRead)
 async def reallocate_funds(
     envelope_id: int,
     reallocation: EnvelopeReallocate,
@@ -368,7 +368,7 @@ async def reallocate_funds(
     return from_envelope
 
 
-@router.post("/{envelope_id}/adjust-balance")
+@router.post("/{envelope_id:int}/adjust-balance")
 async def adjust_envelope_balance(
     envelope_id: int,
     request: AdjustBalanceRequest,
@@ -420,7 +420,7 @@ async def adjust_envelope_balance(
     
     return envelope
 
-@router.get("/{envelope_id}/history")
+@router.get("/{envelope_id:int}/history")
 async def get_envelope_history(
     envelope_id: int,
     db: AsyncSession = Depends(get_db),

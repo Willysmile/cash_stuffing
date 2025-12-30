@@ -86,7 +86,7 @@ async def list_wish_lists_htmx(
     )
 
 
-@router.get("/{list_id}/detail", response_class=HTMLResponse)
+@router.get("/{list_id:int}/detail", response_class=HTMLResponse)
 async def wish_list_detail_modal(
     list_id: int,
     request: Request,
@@ -110,7 +110,7 @@ async def wish_list_detail_modal(
     )
 
 
-@router.get("/{list_id}/edit", response_class=HTMLResponse)
+@router.get("/{list_id:int}/edit", response_class=HTMLResponse)
 async def wish_list_edit_modal(
     list_id: int,
     request: Request,
@@ -135,7 +135,7 @@ async def wish_list_edit_modal(
     )
 
 
-@router.put("/{list_id}", response_class=HTMLResponse)
+@router.put("/{list_id:int}", response_class=HTMLResponse)
 async def update_wish_list_htmx(
     list_id: int,
     name: str,
@@ -173,7 +173,7 @@ async def update_wish_list_htmx(
     )
 
 
-@router.delete("/{list_id}", response_class=HTMLResponse)
+@router.delete("/{list_id:int}", response_class=HTMLResponse)
 async def delete_wish_list_htmx(
     list_id: int,
     request: Request,
@@ -208,7 +208,7 @@ async def delete_wish_list_htmx(
     )
 
 
-@router.patch("/{list_id}/items/{item_id}/purchase", response_class=HTMLResponse)
+@router.patch("/{list_id:int}/items/{item_id:int}/purchase", response_class=HTMLResponse)
 async def toggle_item_purchase_htmx(
     list_id: int,
     item_id: int,

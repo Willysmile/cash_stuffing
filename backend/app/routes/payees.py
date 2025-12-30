@@ -60,7 +60,7 @@ async def create_payee(
     return payee
 
 
-@router.put("/{payee_id}", response_model=PayeeRead)
+@router.put("/{payee_id:int}", response_model=PayeeRead)
 async def update_payee(
     payee_id: int,
     payee_data: PayeeUpdate,
@@ -93,7 +93,7 @@ async def update_payee(
     return payee
 
 
-@router.delete("/{payee_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{payee_id:int}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_payee(
     payee_id: int,
     db: AsyncSession = Depends(get_db),

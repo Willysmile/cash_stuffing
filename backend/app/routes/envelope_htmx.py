@@ -116,7 +116,7 @@ async def create_envelope_htmx(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/{envelope_id}/adjust", response_class=HTMLResponse)
+@router.post("/{envelope_id:int}/adjust", response_class=HTMLResponse)
 async def adjust_envelope_htmx(
     envelope_id: int,
     amount: float,
@@ -185,7 +185,7 @@ async def adjust_envelope_htmx(
     )
 
 
-@router.get("/{envelope_id}/detail", response_class=HTMLResponse)
+@router.get("/{envelope_id:int}/detail", response_class=HTMLResponse)
 async def envelope_detail_modal(
     envelope_id: int,
     request: Request,
@@ -234,7 +234,7 @@ async def envelope_detail_modal(
     )
 
 
-@router.get("/{envelope_id}/edit", response_class=HTMLResponse)
+@router.get("/{envelope_id:int}/edit", response_class=HTMLResponse)
 async def envelope_edit_modal(
     envelope_id: int,
     request: Request,

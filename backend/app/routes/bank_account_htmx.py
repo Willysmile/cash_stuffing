@@ -117,7 +117,7 @@ async def create_account_htmx(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/{account_id}/edit", response_class=HTMLResponse)
+@router.get("/{account_id:int}/edit", response_class=HTMLResponse)
 async def account_edit_modal(
     account_id: int,
     request: Request,
@@ -142,7 +142,7 @@ async def account_edit_modal(
     )
 
 
-@router.put("/{account_id}", response_class=HTMLResponse)
+@router.put("/{account_id:int}", response_class=HTMLResponse)
 async def update_account_htmx(
     account_id: int,
     name: str,
@@ -180,7 +180,7 @@ async def update_account_htmx(
     )
 
 
-@router.delete("/{account_id}", response_class=HTMLResponse)
+@router.delete("/{account_id:int}", response_class=HTMLResponse)
 async def delete_account_htmx(
     account_id: int,
     request: Request,

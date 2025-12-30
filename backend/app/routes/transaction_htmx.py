@@ -92,8 +92,7 @@ async def list_transactions_htmx(
     query = query.order_by(Transaction.date.desc())
     result = await db.execute(query.options(
         selectinload(Transaction.category),
-        selectinload(Transaction.bank_account),
-        selectinload(Transaction.envelope)
+        selectinload(Transaction.bank_account)
     ))
     transactions = result.scalars().all()
     
@@ -152,8 +151,7 @@ async def create_transaction_htmx(
             .order_by(Transaction.date.desc())
             .options(
                 selectinload(Transaction.category),
-                selectinload(Transaction.bank_account),
-                selectinload(Transaction.envelope)
+                selectinload(Transaction.bank_account)
             )
         )
         transactions = result.scalars().all()
@@ -169,7 +167,7 @@ async def create_transaction_htmx(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/{transaction_id}/detail", response_class=HTMLResponse)
+@router.get("/{transaction_id:int}/detail", response_class=HTMLResponse)
 async def transaction_detail_modal(
     transaction_id: int,
     request: Request,
@@ -187,8 +185,7 @@ async def transaction_detail_modal(
         )
         .options(
             selectinload(Transaction.category),
-            selectinload(Transaction.bank_account),
-            selectinload(Transaction.envelope)
+            selectinload(Transaction.bank_account)
         )
     )
     transaction = result.scalar_one_or_none()
@@ -208,7 +205,7 @@ async def transaction_detail_modal(
     )
 
 
-@router.get("/{transaction_id}/edit", response_class=HTMLResponse)
+@router.get("/{transaction_id:int}/edit", response_class=HTMLResponse)
 async def transaction_edit_modal(
     transaction_id: int,
     request: Request,
@@ -261,7 +258,7 @@ async def transaction_edit_modal(
     )
 
 
-@router.delete("/{transaction_id}", response_class=HTMLResponse)
+@router.delete("/{transaction_id:int}", response_class=HTMLResponse)
 async def delete_transaction_htmx(
     transaction_id: int,
     request: Request,
@@ -297,8 +294,7 @@ async def delete_transaction_htmx(
         .order_by(Transaction.date.desc())
         .options(
             selectinload(Transaction.category),
-            selectinload(Transaction.bank_account),
-            selectinload(Transaction.envelope)
+            selectinload(Transaction.bank_account)
         )
     )
     transactions = result.scalars().all()

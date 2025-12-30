@@ -43,3 +43,4 @@ class Envelope(Base):
     bank_account = relationship("BankAccount", back_populates="envelopes")
     category = relationship("Category", back_populates="envelopes")
     history = relationship("EnvelopeHistory", back_populates="envelope", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="envelope")

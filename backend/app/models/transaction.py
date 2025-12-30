@@ -19,6 +19,7 @@ class Transaction(Base):
     bank_account_id = Column(Integer, ForeignKey("bank_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=False, index=True)
     payee_id = Column(Integer, ForeignKey("payees.id", ondelete="SET NULL"), nullable=True, index=True)
+    envelope_id = Column(Integer, ForeignKey("envelopes.id", ondelete="SET NULL"), nullable=True, index=True)
     
     # Informations financières
     amount = Column(Numeric(10, 2), nullable=False)
@@ -41,6 +42,7 @@ class Transaction(Base):
     bank_account = relationship("BankAccount", back_populates="transactions")
     category = relationship("Category", back_populates="transactions")
     payee = relationship("Payee", back_populates="transactions")
+    envelope = relationship("Envelope", back_populates="transactions")
     wish_list_items = relationship("WishListItem", back_populates="transaction")
     
     def __repr__(self):

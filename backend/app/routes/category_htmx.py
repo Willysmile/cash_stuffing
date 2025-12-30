@@ -105,7 +105,7 @@ async def create_category_htmx(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/{category_id}/edit", response_class=HTMLResponse)
+@router.get("/{category_id:int}/edit", response_class=HTMLResponse)
 async def category_edit_modal(
     category_id: int,
     request: Request,
@@ -130,7 +130,7 @@ async def category_edit_modal(
     )
 
 
-@router.put("/{category_id}", response_class=HTMLResponse)
+@router.put("/{category_id:int}", response_class=HTMLResponse)
 async def update_category_htmx(
     category_id: int,
     name: str,
@@ -166,7 +166,7 @@ async def update_category_htmx(
     )
 
 
-@router.delete("/{category_id}", response_class=HTMLResponse)
+@router.delete("/{category_id:int}", response_class=HTMLResponse)
 async def delete_category_htmx(
     category_id: int,
     request: Request,

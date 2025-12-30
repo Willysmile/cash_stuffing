@@ -94,15 +94,17 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(categories_router, prefix="/api")
 app.include_router(bank_accounts_router, prefix="/api")
 app.include_router(envelopes_router, prefix="/api")
-app.include_router(envelope_htmx_router, prefix="/api")
 app.include_router(transactions_router, prefix="/api")
+app.include_router(wish_lists_router, prefix="/api")
+app.include_router(payees_router, prefix="/api")
+
+# === Routes HTMX (montées après pour éviter les conflits) ===
+app.include_router(envelope_htmx_router, prefix="/api")
 app.include_router(transaction_htmx_router, prefix="/api")
 app.include_router(category_htmx_router, prefix="/api")
 app.include_router(bank_account_htmx_router, prefix="/api")
-app.include_router(wish_lists_router, prefix="/api")
 app.include_router(wish_list_htmx_router, prefix="/api")
 app.include_router(dashboard_htmx_router, prefix="/api")
-app.include_router(payees_router, prefix="/api")
 
 # === Routes du frontend ===
 app.include_router(frontend_router)

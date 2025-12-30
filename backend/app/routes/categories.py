@@ -120,7 +120,7 @@ async def get_categories_tree(
     return [build_tree(cat) for cat in root_categories]
 
 
-@router.get("/{category_id}", response_model=CategoryRead)
+@router.get("/{category_id:int}", response_model=CategoryRead)
 async def get_category(
     category_id: int,
     db: AsyncSession = Depends(get_db),
@@ -203,7 +203,7 @@ async def create_category(
     return new_category
 
 
-@router.put("/{category_id}", response_model=CategoryRead)
+@router.put("/{category_id:int}", response_model=CategoryRead)
 async def update_category(
     category_id: int,
     category_data: CategoryUpdate,
@@ -272,7 +272,7 @@ async def update_category(
     return category
 
 
-@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{category_id:int}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(
     category_id: int,
     db: AsyncSession = Depends(get_db),

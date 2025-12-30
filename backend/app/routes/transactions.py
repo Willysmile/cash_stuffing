@@ -174,7 +174,7 @@ async def create_transaction(
     return transaction
 
 
-@router.get("/{transaction_id}", response_model=TransactionRead)
+@router.get("/{transaction_id:int}", response_model=TransactionRead)
 async def get_transaction(
     transaction_id: int,
     db: AsyncSession = Depends(get_db),
@@ -200,7 +200,7 @@ async def get_transaction(
     return transaction
 
 
-@router.put("/{transaction_id}", response_model=TransactionRead)
+@router.put("/{transaction_id:int}", response_model=TransactionRead)
 async def update_transaction(
     transaction_id: int,
     transaction_data: TransactionUpdate,
@@ -341,7 +341,7 @@ async def update_transaction(
     return transaction
 
 
-@router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{transaction_id:int}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_transaction(
     transaction_id: int,
     db: AsyncSession = Depends(get_db),

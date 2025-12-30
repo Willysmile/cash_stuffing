@@ -66,7 +66,7 @@ async def create_wish_list(
     return wish_list
 
 
-@router.get("/{wish_list_id}", response_model=WishListWithItems)
+@router.get("/{wish_list_id:int}", response_model=WishListWithItems)
 async def get_wish_list(
     wish_list_id: int,
     db: AsyncSession = Depends(get_db),
@@ -112,7 +112,7 @@ async def get_wish_list(
     return wish_list_dict
 
 
-@router.put("/{wish_list_id}", response_model=WishListRead)
+@router.put("/{wish_list_id:int}", response_model=WishListRead)
 async def update_wish_list(
     wish_list_id: int,
     wish_list_data: WishListUpdate,
@@ -147,7 +147,7 @@ async def update_wish_list(
     return wish_list
 
 
-@router.delete("/{wish_list_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{wish_list_id:int}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_wish_list(
     wish_list_id: int,
     db: AsyncSession = Depends(get_db),
@@ -178,7 +178,7 @@ async def delete_wish_list(
 
 # === Routes pour les articles (items) ===
 
-@router.post("/{wish_list_id}/items", response_model=WishListItemRead, status_code=status.HTTP_201_CREATED)
+@router.post("/{wish_list_id:int}/items", response_model=WishListItemRead, status_code=status.HTTP_201_CREATED)
 async def create_wish_list_item(
     wish_list_id: int,
     item_data: WishListItemCreate,
@@ -215,7 +215,7 @@ async def create_wish_list_item(
     return item
 
 
-@router.get("/{wish_list_id}/items", response_model=List[WishListItemRead])
+@router.get("/{wish_list_id:int}/items", response_model=List[WishListItemRead])
 async def list_wish_list_items(
     wish_list_id: int,
     item_status: Optional[ItemStatus] = Query(None, description="Filtrer par statut"),
@@ -253,7 +253,7 @@ async def list_wish_list_items(
     return items
 
 
-@router.put("/items/{item_id}", response_model=WishListItemRead)
+@router.put("/items/{item_id:int}", response_model=WishListItemRead)
 async def update_wish_list_item(
     item_id: int,
     item_data: WishListItemUpdate,
@@ -291,7 +291,7 @@ async def update_wish_list_item(
     return item
 
 
-@router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/items/{item_id:int}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_wish_list_item(
     item_id: int,
     db: AsyncSession = Depends(get_db),
@@ -323,7 +323,7 @@ async def delete_wish_list_item(
     return None
 
 
-@router.post("/items/{item_id}/mark-purchased", response_model=WishListItemRead)
+@router.post("/items/{item_id:int}/mark-purchased", response_model=WishListItemRead)
 async def mark_item_as_purchased(
     item_id: int,
     purchased_date: Optional[str] = Query(None, description="Date d'achat (YYYY-MM-DD)"),
@@ -360,7 +360,7 @@ async def mark_item_as_purchased(
     
     return item
 
-@router.patch("/wish_lists/{wish_list_id}/items/{item_id}/purchase", response_model=WishListItemRead)
+@router.patch("/wish_lists/{wish_list_id:int}/items/{item_id:int}/purchase", response_model=WishListItemRead)
 async def toggle_item_purchased(
     wish_list_id: int,
     item_id: int,

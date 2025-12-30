@@ -25,7 +25,7 @@ from app.utils.dependencies import get_current_user
 router = APIRouter(prefix="/bank_accounts", tags=["Bank Accounts"])
 
 
-@router.post("/{account_id}/recalculate", response_model=BankAccountRead)
+@router.post("/{account_id:int}/recalculate", response_model=BankAccountRead)
 async def recalculate_balance(
     account_id: int,
     db: AsyncSession = Depends(get_db),
@@ -121,7 +121,7 @@ async def get_bank_accounts(
     return accounts
 
 
-@router.get("/{account_id}", response_model=BankAccountRead)
+@router.get("/{account_id:int}", response_model=BankAccountRead)
 async def get_bank_account(
     account_id: int,
     db: AsyncSession = Depends(get_db),
@@ -234,7 +234,7 @@ async def create_bank_account(
     return new_account
 
 
-@router.put("/{account_id}", response_model=BankAccountRead)
+@router.put("/{account_id:int}", response_model=BankAccountRead)
 async def update_bank_account(
     account_id: int,
     account_data: BankAccountUpdate,
@@ -283,7 +283,7 @@ async def update_bank_account(
     return account
 
 
-@router.post("/{account_id}/adjust", response_model=BankAccountRead)
+@router.post("/{account_id:int}/adjust", response_model=BankAccountRead)
 async def adjust_balance(
     account_id: int,
     adjustment_data: BankAccountAdjustBalance,
@@ -342,7 +342,7 @@ async def adjust_balance(
     return account
 
 
-@router.delete("/{account_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{account_id:int}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_bank_account(
     account_id: int,
     db: AsyncSession = Depends(get_db),

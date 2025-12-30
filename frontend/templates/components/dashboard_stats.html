@@ -33,12 +33,12 @@
             <div class="box has-background-light">
               <p class="subtitle is-6">{{ envelope.name }}</p>
               <progress class="progress is-primary" 
-                        value="{{ envelope.spent_amount }}" 
-                        max="{{ envelope.allocated_amount }}">
-                {{ "%.0f"|format((envelope.spent_amount / envelope.allocated_amount * 100) if envelope.allocated_amount > 0 else 0) }}%
+                        value="{{ envelope.current_balance }}" 
+                        max="{{ envelope.target_amount }}">
+                {{ "%.0f"|format((envelope.current_balance / envelope.target_amount * 100) if envelope.target_amount > 0 else 0) }}%
               </progress>
               <p class="is-size-7">
-                {{ "%.2f"|format(envelope.spent_amount) }} € / {{ "%.2f"|format(envelope.allocated_amount) }} €
+                {{ "%.2f"|format(envelope.current_balance) }} € / {{ "%.2f"|format(envelope.target_amount) }} €
               </p>
             </div>
           </div>

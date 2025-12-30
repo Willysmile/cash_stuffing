@@ -12,7 +12,7 @@
       <tr>
         <td>{{ account.name }}</td>
         <td>{{ account.account_number or '-' }}</td>
-        <td class="has-text-weight-bold">{{ "%.2f"|format(account.balance) }} €</td>
+        <td class="has-text-weight-bold">{{ "%.2f"|format(account.current_balance) }} €</td>
         <td>
           <button class="button is-small is-info"
                   hx-get="/api/bank-accounts/htmx/{{ account.id }}/edit"
