@@ -1,12 +1,15 @@
 {% for envelope in envelopes %}
 <div class="column is-4" id="envelope-{{ envelope.id }}">
-    <div class="card">
+    <div class="card" style="height: 100%;">
         <header class="card-header {% if envelope.current_balance|float >= envelope.target_amount|float %}has-background-success{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.75) %}has-background-info{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.5) %}has-background-warning{% else %}has-background-danger{% endif %}">
             <p class="card-header-title has-text-white" 
                style="cursor: pointer;"
                hx-get="/api/envelopes/htmx/{{ envelope.id }}/detail"
                hx-target="#modal-container"
                hx-swap="innerHTML">
+                <span class="icon mr-2">
+                    <i class="fas fa-envelope"></i>
+                </span>
                 {{ envelope.name }}
             </p>
             <button class="card-header-icon has-text-white" 
@@ -20,101 +23,90 @@
             </button>
         </header>
         <div class="card-content">
-            <div class="content">
-                {% if envelope.description %}
-                <p class="has-text-grey-dark mb-3">{{ envelope.description }}</p>
-                {% endif %}
-                
-                <div class="mb-3">
-                    <strong>Objectif:</strong> {{ "%.2f"|format(envelope.target_amount) }} €<br>
-                    <strong>Montant actuel:</strong> {{ "%.2f"|format(envelope.current_balance) }} €
-                </div>
-                
-                <progress class="progress {% if envelope.current_balance|float >= envelope.target_amount|float %}is-success{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.75) %}is-info{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.5) %}is-warning{% else %}is-danger{% endif %}" 
-                          value="{{ envelope.current_balance }}" 
-                          max="{{ envelope.target_amount }}">
-                    {{ "%.0f"|format((envelope.current_balance|float / envelope.target_amount|float * 100) if envelope.target_amount|float > 0 else 0) }}%
-                </progress>
-                
+            {% if envelope.description %}
+            <p class="has-text-grey mb-3">{{ envelope.description }}</p>
+            {% endif %}
+            
+            <!-- Montants en grand -->
+            <div class="has-text-centered mb-4">
+                <p class="title is-3 mb-1">{{ "%.2f"|format(envelope.current_balance) }} €</p>
+                <p class="subtitle is-6 has-text-grey">sur {{ "%.2f"|format(envelope.target_amount) }} €</p>
+            </div>
+            
+            <!-- Barre de progression -->
+            <progress class="progress is-medium {% if envelope.current_balance|float >= envelope.target_amount|float %}is-success{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.75) %}is-info{% elif envelope.current_balance|float >= (envelope.target_amount|float * 0.5) %}is-warning{% else %}is-danger{% endif %}" 
+                      value="{{ envelope.current_balance }}" 
+                      max="{{ envelope.target_amount }}">
+                {{ "%.0f"|format((envelope.current_balance|float / envelope.target_amount|float * 100) if envelope.target_amount|float > 0 else 0) }}%
+            </progress>
+            <p class="has-text-centered has-text-grey-light is-size-7 mt-1">
+                {{ "%.0f"|format((envelope.current_balance|float / envelope.target_amount|float * 100) if envelope.target_amount|float > 0 else 0) }}% de l'objectif
+            </p>
+            
+            <!-- Infos secondaires -->
+            <div class="tags mt-3">
                 {% if envelope.category %}
-                <p class="has-text-grey">
-                    <span class="icon-text">
-                        <span class="icon">
-                            <i class="fas fa-tag"></i>
-                        </span>
-                        <span>{{ envelope.category.name }}</span>
-                    </span>
-                </p>
+                <span class="tag is-light">
+                    <span class="icon is-small"><i class="fas fa-tag"></i></span>
+                    <span>{{ envelope.category.name }}</span>
+                </span>
                 {% endif %}
-                
                 {% if envelope.bank_account %}
-                <p class="has-text-grey">
-                    <span class="icon-text">
-                        <span class="icon">
-                            <i class="fas fa-university"></i>
-                        </span>
-                        <span>{{ envelope.bank_account.name }}</span>
-                    </span>
-                </p>
+                <span class="tag is-light">
+                    <span class="icon is-small"><i class="fas fa-university"></i></span>
+                    <span>{{ envelope.bank_account.name }}</span>
+                </span>
                 {% else %}
-                <p class="has-text-grey">
-                    <span class="icon-text">
-                        <span class="icon">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </span>
-                        <span>Espèces</span>
-                    </span>
-                </p>
+                <span class="tag is-light">
+                    <span class="icon is-small"><i class="fas fa-money-bill-wave"></i></span>
+                    <span>Espèces</span>
+                </span>
                 {% endif %}
-                
                 {% if not envelope.is_active %}
-                <span class="tag is-warning mt-2">Inactive</span>
+                <span class="tag is-warning">Inactive</span>
                 {% endif %}
-
-                <!-- Formulaire ajustement montant avec HTMX -->
-                <div class="mt-4 pt-4" style="border-top: 1px solid #dbdbdb;">
-                    <form hx-post="/api/envelopes/{{ envelope.id }}/adjust"
-                          hx-target="#envelope-{{ envelope.id }}"
-                          hx-swap="outerHTML"
-                          hx-on::after-request="
-                              if(event.detail.xhr.status === 200) {
-                                  document.querySelector('input[id=amount-{{ envelope.id }}]').value = '';
-                              }
-                          ">
-                        <div class="field has-addons" style="max-width: 300px;">
-                            <p class="control">
-                                <button class="button is-danger" 
-                                        type="submit"
-                                        name="direction"
-                                        value="-1"
-                                        title="Retirer de l'argent">
-                                    <span class="icon"><i class="fas fa-minus"></i></span>
-                                </button>
-                            </p>
-                            <p class="control is-expanded">
-                                <input class="input" 
-                                       id="amount-{{ envelope.id }}"
-                                       type="number" 
-                                       name="amount"
-                                       step="0.01" 
-                                       min="0.01"
-                                       placeholder="Montant"
-                                       required>
-                            </p>
-                            <p class="control">
-                                <button class="button is-success" 
-                                        type="submit"
-                                        name="direction"
-                                        value="1"
-                                        title="Ajouter de l'argent">
-                                    <span class="icon"><i class="fas fa-plus"></i></span>
-                                </button>
-                            </p>
-                        </div>
-                    </form>
-                </div>
             </div>
         </div>
+        
+        <!-- Ajustement rapide -->
+        <footer class="card-footer" style="border-top: 1px solid #dbdbdb;">
+            <form class="card-footer-item p-3" 
+                  hx-post="/api/envelopes/{{ envelope.id }}/adjust"
+                  hx-target="#envelope-{{ envelope.id }}"
+                  hx-swap="outerHTML"
+                  hx-on::after-request="if(event.detail.xhr.status === 200) { this.reset(); }">
+                <div class="field has-addons" style="width: 100%;">
+                    <p class="control">
+                        <button class="button is-danger is-small" 
+                                type="submit"
+                                name="direction"
+                                value="-1"
+                                title="Retirer">
+                            <span class="icon"><i class="fas fa-minus"></i></span>
+                        </button>
+                    </p>
+                    <p class="control is-expanded">
+                        <input class="input is-small" 
+                               type="number" 
+                               name="amount"
+                               step="0.01" 
+                               min="0.01"
+                               placeholder="Montant"
+                               required>
+                    </p>
+                    <p class="control">
+                        <button class="button is-success is-small" 
+                                type="submit"
+                                name="direction"
+                                value="1"
+                                title="Ajouter">
+                            <span class="icon"><i class="fas fa-plus"></i></span>
+                        </button>
+                    </p>
+                </div>
+            </form>
+        </footer>
     </div>
 </div>
 {% endfor %}
+

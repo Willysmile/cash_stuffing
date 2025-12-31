@@ -3,10 +3,7 @@
   <div class="modal-card">
     <header class="modal-card-head">
       <p class="modal-card-title">{{ wish_list.name }}</p>
-      <button class="delete" hx-on="click: this.closest('.modal').classList.remove('is-active')"></button>
-    </header>
-    <section class="modal-card-body">
-      {% if wish_list.description %}
+      <button class="delete" onclick="document.getElementById('wish-list-detail-modal').classList.remove('is-active')"></button>
         <div class="content">
           <p>{{ wish_list.description }}</p>
         </div>
@@ -62,8 +59,7 @@
         </table>
       </div>
     </section>
-    <footer class="modal-card-foot">
-      <button class="button" hx-on="click: this.closest('.modal').classList.remove('is-active')">
+      <button class="button" onclick="document.getElementById('wish-list-detail-modal').classList.remove('is-active')">
         Fermer
       </button>
       <button class="button is-primary"

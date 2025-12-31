@@ -65,3 +65,10 @@ async def categories_page(request: Request):
 async def wish_lists_page(request: Request):
     """Page des listes de souhaits"""
     return templates.TemplateResponse("wish_lists.html", {"request": request})
+
+
+@router.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request):
+    """Page des paramètres"""
+    return templates.TemplateResponse("settings.html", {"request": request})
+

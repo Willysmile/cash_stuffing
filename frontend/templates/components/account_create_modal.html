@@ -2,49 +2,152 @@
   <div class="modal-background"></div>
   <div class="modal-card">
     <header class="modal-card-head has-background-success">
-      <p class="modal-card-title has-text-white">Nouveau compte</p>
-      <button class="delete" hx-on="click: this.closest('.modal').classList.remove('is-active')"></button>
+      <p class="modal-card-title has-text-white">Nouveau compte bancaire</p>
+      <button class="delete" onclick="document.getElementById('account-create-modal').classList.remove('is-active')"></button>
     </header>
     <section class="modal-card-body">
-      <form>
-        <div class="field">
-          <label class="label">Nom *</label>
-          <div class="control">
-            <input class="input" type="text" name="name" required>
+      <form hx-post="/api/bank-accounts/htmx"
+            hx-target="#accounts-tbody"
+            hx-swap="innerHTML"
+            id="account-create-form">
+        <!-- Nom et Type -->
+        <div class="columns">
+          <div class="column is-7">
+            <div class="field">
+              <label class="label">Nom du compte *</label>
+              <div class="control has-icons-left">
+                <input class="input" 
+                       type="text" 
+                       name="name" 
+                       placeholder="ex: Compte courant, Livret A..."
+                       required 
+                       minlength="1" 
+                       maxlength="100">
+                <span class="icon is-left"><i class="fas fa-wallet"></i></span>
+              </div>
+              <p class="help is-danger" style="display:none;">Le nom est requis (1-100 caractères)</p>
+            </div>
+          </div>
+          <div class="column is-5">
+            <div class="field">
+              <label class="label">Type *</label>
+              <div class="control">
+                <div class="select is-fullwidth">
+                  <select name="account_type" required>
+                    <option value="checking">Courant</option>
+                    <option value="savings">Épargne</option>
+                    <option value="livret">Livret</option>
+                    <option value="cash">Espèces</option>
+                    <option value="other">Autre</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="field">
-          <label class="label">Numéro de compte</label>
-          <div class="control">
-            <input class="input" type="text" name="account_number">
+        <!-- Solde et Devise -->
+        <div class="columns">
+          <div class="column is-6">
+            <div class="field">
+              <label class="label">Solde initial (€)</label>
+              <div class="control has-icons-left">
+                <input class="input" 
+                       type="number" 
+                       name="balance" 
+                       step="0.01" 
+                       value="0" 
+                       min="0">
+                <span class="icon is-left"><i class="fas fa-euro-sign"></i></span>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6">
+            <div class="field">
+              <label class="label">Devise</label>
+              <div class="control">
+                <div class="select is-fullwidth">
+                  <select name="currency">
+                    <option value="EUR" selected>EUR (€)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="JPY">JPY (¥)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
+        <!-- IBAN, Couleur et Icône -->
+        <div class="columns">
+          <div class="column is-6">
+            <div class="field">
+              <label class="label">IBAN/Numéro</label>
+              <div class="control">
+                <input class="input" 
+                       type="text" 
+                       name="account_number" 
+                       placeholder="Optionnel"
+                       maxlength="50">
+              </div>
+            </div>
+          </div>
+          <div class="column is-3">
+            <div class="field">
+              <label class="label">Couleur</label>
+              <div class="control">
+                <input class="input" type="color" name="color" value="#3273dc">
+              </div>
+            </div>
+          </div>
+          <div class="column is-3">
+            <div class="field">
+              <label class="label">Icône</label>
+              <div class="control">
+                <input class="input" type="text" name="icon" placeholder="🏦" maxlength="10">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- État -->
         <div class="field">
-          <label class="label">Solde initial (€)</label>
           <div class="control">
-            <input class="input" type="number" name="balance" step="0.01" value="0">
+            <label class="checkbox">
+              <input type="checkbox" name="is_active" value="true">
+              Compte actif
+            </label>
+          </div>
+        </div>
+
+        <!-- Boutons -->
+        <div class="field is-grouped mt-5">
+          <div class="control">
+            <button type="submit" class="button is-success">
+              Créer le compte
+            </button>
+          </div>
+          <div class="control">
+            <button type="button" 
+                    class="button"
+                    onclick="document.getElementById('account-create-modal').classList.remove('is-active')">
+              Annuler
+            </button>
           </div>
         </div>
       </form>
     </section>
-    <footer class="modal-card-foot">
-      <button class="button" hx-on="click: this.closest('.modal').classList.remove('is-active')">
-        Annuler
-      </button>
-      <button class="button is-success"
-              hx-post="/api/bank-accounts/htmx"
-              hx-include="closest form"
-              hx-target="#accounts-tbody"
-              hx-swap="innerHTML"
-              hx-on="htmx:afterSwap: document.getElementById('account-create-modal').classList.remove('is-active')">
-        Créer
-      </button>
-    </footer>
   </div>
 </div>
 
 <script>
 document.getElementById('account-create-modal').classList.add('is-active');
+
+// Fermer la modale après création réussie
+document.getElementById('account-create-form').addEventListener('htmx:afterRequest', function(event) {
+  if (event.detail.successful) {
+    document.getElementById('account-create-modal').classList.remove('is-active');
+  }
+});
 </script>

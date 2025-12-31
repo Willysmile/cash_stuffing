@@ -20,6 +20,7 @@ class BankAccount(Base):
     # Informations
     name = Column(String(100), nullable=False)
     account_type = Column(String(50), nullable=False)  # checking, savings, livret, etc.
+    account_number = Column(String(50), nullable=True)  # IBAN ou numéro de compte
     
     # Finances
     initial_balance = Column(Numeric(10, 2), default=0.00, nullable=False)

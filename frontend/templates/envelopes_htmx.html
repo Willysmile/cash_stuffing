@@ -1,19 +1,212 @@
 {% extends "base.html" %}
 
-{% block title %}Enveloppes HTMX - Cash Stuffing{% endblock %}
+{% block title %}Enveloppes - Cash Stuffing{% endblock %}
 
 {% block content %}
-<div id="envelopes-container"
-     hx-get="/api/envelopes/htmx"
-     hx-trigger="load"
-     hx-swap="innerHTML">
-    <div class="has-text-centered">
-        <span class="icon is-large">
-            <i class="fas fa-spinner fa-pulse fa-2x"></i>
-        </span>
-        <p>Chargement des enveloppes...</p>
+<section class="hero is-success">
+    <div class="hero-body">
+        <p class="title">Enveloppes budgétaires</p>
+        <p class="subtitle">Gérez vos objectifs d'épargne</p>
+    </div>
+</section>
+
+<div class="section">
+    <!-- Statistiques globales -->
+    <div class="columns is-multiline mb-4" id="stats-container">
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Total enveloppes</p>
+                <p class="title" id="total-envelopes">-</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Montant total</p>
+                <p class="title has-text-success" id="total-current">0 €</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Objectif total</p>
+                <p class="title has-text-info" id="total-target">0 €</p>
+            </div>
+        </div>
+        <div class="column is-3">
+            <div class="box has-text-centered">
+                <p class="heading">Progression</p>
+                <p class="title has-text-warning" id="total-progress">0%</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barre d'actions -->
+    <div class="level mb-4">
+        <div class="level-left">
+            <div class="level-item">
+                <div class="field has-addons">
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" id="searchInput" placeholder="Rechercher une enveloppe...">
+                        <span class="icon is-left">
+                            <i class="fas fa-search"></i>
+                        </span>
+                    </div>
+                    <div class="control">
+                        <button class="button" id="resetSearch">
+                            <span class="icon"><i class="fas fa-times"></i></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="level-item">
+                <div class="field">
+                    <div class="control">
+                        <div class="select">
+                            <select id="filterStatus">
+                                <option value="">Tous les statuts</option>
+                                <option value="active">Actives</option>
+                                <option value="inactive">Inactives</option>
+                                <option value="completed">Objectif atteint</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <div class="buttons">
+                    <button class="button" id="view-grid" title="Vue grille">
+                        <span class="icon"><i class="fas fa-th"></i></span>
+                    </button>
+                    <button class="button" id="view-list" title="Vue liste">
+                        <span class="icon"><i class="fas fa-list"></i></span>
+                    </button>
+                </div>
+            </div>
+            <div class="level-item">
+                <button class="button is-success" 
+                        hx-get="/api/envelopes/htmx/create" 
+                        hx-target="#modal-container" 
+                        hx-swap="innerHTML">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Nouvelle enveloppe</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteneur des enveloppes -->
+    <div class="columns is-multiline" 
+         id="envelopes-container"
+         hx-get="/api/envelopes/htmx"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="column is-12 has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Chargement des enveloppes...</p>
+        </div>
     </div>
 </div>
 
 <div id="modal-container"></div>
+
+<script>
+// Calculer les statistiques après chargement
+document.body.addEventListener('htmx:afterSwap', (event) => {
+    if (event.detail.target.id === 'envelopes-container') {
+        calculateStats();
+    }
+});
+
+function calculateStats() {
+    const cards = document.querySelectorAll('[id^="envelope-"]');
+    let totalEnvelopes = cards.length;
+    let totalCurrent = 0;
+    let totalTarget = 0;
+    
+    cards.forEach(card => {
+        const currentText = card.querySelector('.card-content').textContent;
+        const currentMatch = currentText.match(/Montant actuel:\s*([\d.]+)\s*€/);
+        const targetMatch = currentText.match(/Objectif:\s*([\d.]+)\s*€/);
+        
+        if (currentMatch) totalCurrent += parseFloat(currentMatch[1]);
+        if (targetMatch) totalTarget += parseFloat(targetMatch[1]);
+    });
+    
+    const progress = totalTarget > 0 ? Math.round((totalCurrent / totalTarget) * 100) : 0;
+    
+    document.getElementById('total-envelopes').textContent = totalEnvelopes;
+    document.getElementById('total-current').textContent = totalCurrent.toFixed(2) + ' €';
+    document.getElementById('total-target').textContent = totalTarget.toFixed(2) + ' €';
+    document.getElementById('total-progress').textContent = progress + '%';
+}
+
+// Recherche
+document.getElementById('searchInput')?.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('[id^="envelope-"]');
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(query) ? '' : 'none';
+    });
+});
+
+document.getElementById('resetSearch')?.addEventListener('click', () => {
+    document.getElementById('searchInput').value = '';
+    document.querySelectorAll('[id^="envelope-"]').forEach(card => {
+        card.style.display = '';
+    });
+});
+
+// Filtre par statut
+document.getElementById('filterStatus')?.addEventListener('change', (e) => {
+    const filter = e.target.value;
+    const cards = document.querySelectorAll('[id^="envelope-"]');
+    
+    cards.forEach(card => {
+        const cardContent = card.textContent;
+        const hasInactive = cardContent.includes('Inactive');
+        const progress = card.querySelector('progress');
+        const isCompleted = progress && parseFloat(progress.value) >= parseFloat(progress.max);
+        
+        let show = true;
+        if (filter === 'active') {
+            show = !hasInactive;
+        } else if (filter === 'inactive') {
+            show = hasInactive;
+        } else if (filter === 'completed') {
+            show = isCompleted;
+        }
+        
+        card.style.display = show ? '' : 'none';
+    });
+});
+
+// Vue grille/liste
+document.getElementById('view-grid')?.addEventListener('click', () => {
+    const container = document.getElementById('envelopes-container');
+    container.classList.remove('is-multiline');
+    document.querySelectorAll('[id^="envelope-"]').forEach(col => {
+        col.className = 'column is-4';
+    });
+    document.getElementById('view-grid').classList.add('is-primary');
+    document.getElementById('view-list').classList.remove('is-primary');
+});
+
+document.getElementById('view-list')?.addEventListener('click', () => {
+    const container = document.getElementById('envelopes-container');
+    container.classList.add('is-multiline');
+    document.querySelectorAll('[id^="envelope-"]').forEach(col => {
+        col.className = 'column is-12';
+    });
+    document.getElementById('view-list').classList.add('is-primary');
+    document.getElementById('view-grid').classList.remove('is-primary');
+});
+
+// Vue par défaut = grille
+document.getElementById('view-grid')?.classList.add('is-primary');
+</script>
 {% endblock %}
+

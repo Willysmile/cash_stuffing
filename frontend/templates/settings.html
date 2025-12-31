@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}Paramètres - Cash Stuffing{% endblock %}
+
+{% block content %}
+<section class="hero is-primary">
+    <div class="hero-body">
+        <p class="title">Paramètres</p>
+        <p class="subtitle">Configurez votre application</p>
+    </div>
+</section>
+
+<div class="section">
+    <div class="columns">
+        <!-- Menu latéral -->
+        <div class="column is-3">
+            <aside class="menu box">
+                <p class="menu-label">Général</p>
+                <ul class="menu-list">
+                    <li><a class="is-active" data-tab="general">Préférences générales</a></li>
+                    <li><a data-tab="display">Affichage</a></li>
+                    <li><a data-tab="notifications">Notifications</a></li>
+                </ul>
+                <p class="menu-label">Données</p>
+                <ul class="menu-list">
+                    <li><a data-tab="export">Exporter les données <span class="tag is-danger is-small">TODO</span></a></li>
+                    <li><a data-tab="import">Importer les données <span class="tag is-danger is-small">TODO</span></a></li>
+                </ul>
+                <p class="menu-label">Compte</p>
+                <ul class="menu-list">
+                    <li><a data-tab="profile">Profil <span class="tag is-danger is-small">TODO</span></a></li>
+                    <li><a data-tab="security">Sécurité <span class="tag is-danger is-small">TODO</span></a></li>
+                </ul>
+            </aside>
+        </div>
+
+        <!-- Contenu des paramètres -->
+        <div class="column is-9">
+            <!-- Onglet Général -->
+            <div class="box settings-tab" id="tab-general">
+                <h2 class="title is-4">Préférences générales</h2>
+                
+                <div class="field">
+                    <label class="label">Devise par défaut</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="defaultCurrency">
+                                <option value="EUR" selected>EUR (€)</option>
+                                <option value="USD">USD ($)</option>
+                                <option value="GBP">GBP (£)</option>
+                                <option value="CHF">CHF (Fr.)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="help">Devise utilisée par défaut pour les nouveaux comptes et transactions</p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Langue</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="language">
+                                <option value="fr" selected>Français</option>
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Format de date</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="dateFormat">
+                                <option value="DD/MM/YYYY" selected>DD/MM/YYYY</option>
+                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary" onclick="saveGeneralSettings()">
+                            <span class="icon"><i class="fas fa-save"></i></span>
+                            <span>Enregistrer</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Affichage -->
+            <div class="box settings-tab" id="tab-display" style="display: none;">
+                <h2 class="title is-4">Affichage</h2>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" id="darkMode">
+                        Mode sombre
+                    </label>
+                    <p class="help">Activer le thème sombre de l'interface</p>
+                </div>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" id="compactMode">
+                        Mode compact
+                    </label>
+                    <p class="help">Affichage plus dense des tableaux et listes</p>
+                </div>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" id="showAccountTabs" checked>
+                        Afficher l'onglet <strong>« Tous les comptes »</strong> dans <em>Transactions</em>
+                    </label>
+                </div>
+
+                <div class="field">
+                    <label class="label">Nombre de lignes par page</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="rowsPerPage">
+                                <option value="10">10</option>
+                                <option value="25" selected>25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary" onclick="saveDisplaySettings()">
+                            <span class="icon"><i class="fas fa-save"></i></span>
+                            <span>Enregistrer</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Notifications -->
+            <div class="box settings-tab" id="tab-notifications" style="display: none;">
+                <h2 class="title is-4">Notifications</h2>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" id="notifTransactions" checked>
+                        Notifications pour les nouvelles transactions
+                    </label>
+                </div>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" id="notifBudgetAlerts" checked>
+                        Alertes de dépassement de budget
+                    </label>
+                </div>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" id="notifGoals">
+                        Notifications d'objectifs d'épargne atteints
+                    </label>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary" onclick="saveNotificationSettings()">
+                            <span class="icon"><i class="fas fa-save"></i></span>
+                            <span>Enregistrer</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Export -->
+            <div class="box settings-tab" id="tab-export" style="display: none;">
+                <h2 class="title is-4">Exporter les données <span class="tag is-danger">Non implémenté</span></h2>
+                <p class="mb-4">Téléchargez vos données dans différents formats</p>
+
+                <div class="buttons">
+                    <button class="button is-info" onclick="exportData('csv')" disabled>
+                        <span class="icon"><i class="fas fa-file-csv"></i></span>
+                        <span>Exporter en CSV</span>
+                    </button>
+                    <button class="button is-info" onclick="exportData('json')" disabled>
+                        <span class="icon"><i class="fas fa-file-code"></i></span>
+                        <span>Exporter en JSON</span>
+                    </button>
+                    <button class="button is-info" onclick="exportData('excel')" disabled>
+                        <span class="icon"><i class="fas fa-file-excel"></i></span>
+                        <span>Exporter en Excel</span>
+                    </button>
+                </div>
+
+                <div class="notification is-warning is-light mt-4">
+                    <p><strong>⚠️ Fonctionnalité à venir</strong> : L'export de données sera disponible prochainement.</p>
+                </div>
+            </div>
+
+            <!-- Onglet Import -->
+            <div class="box settings-tab" id="tab-import" style="display: none;">
+                <h2 class="title is-4">Importer les données <span class="tag is-danger">Non implémenté</span></h2>
+
+                <div class="notification is-warning is-light">
+                    <p><strong>⚠️ Fonctionnalité à venir</strong> : L'import de données sera disponible prochainement.</p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Format d'import</label>
+                    <div class="control">
+                        <div class="select">
+                            <select id="importFormat" disabled>
+                                <option value="csv">CSV</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="file has-name">
+                        <label class="file-label">
+                            <input class="file-input" type="file" id="importFile" accept=".csv,.json" disabled>
+                            <span class="file-cta">
+                                <span class="file-icon">
+                                    <i class="fas fa-upload"></i>
+                                </span>
+                                <span class="file-label">
+                                    Choisir un fichier…
+                                </span>
+                            </span>
+                            <span class="file-name" id="importFileName">
+                                Aucun fichier sélectionné
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-warning" onclick="importData()" disabled>
+                            <span class="icon"><i class="fas fa-file-import"></i></span>
+                            <span>Importer</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onglet Profil -->
+            <div class="box settings-tab" id="tab-profile" style="display: none;">
+                <h2 class="title is-4">Profil <span class="tag is-danger">Non implémenté</span></h2>
+
+                <div class="notification is-warning is-light">
+                    <p><strong>⚠️ Fonctionnalité à venir</strong> : La modification du profil sera disponible prochainement.</p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Email</label>
+                    <div class="control">
+                        <input class="input" type="email" id="userEmail" placeholder="user@example.com" readonly disabled>
+                    </div>
+                    <p class="help">Votre adresse email ne peut pas être modifiée</p>
+                </div>
+
+                <div class="field">
+                    <label class="label">Nom d'affichage</label>
+                    <div class="control">
+                        <input class="input" type="text" id="displayName" placeholder="Jean Dupont" disabled>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary" onclick="saveProfile()" disabled>
+                            <span class="icon"><i class="fas fa-save"></i></span>
+                            <span>Enregistrer</span>
+                        </button>
+                    </div>
+                </div>
+            </div> <span class="tag is-danger">Non implémenté</span></h2>
+
+                <div class="notification is-warning is-light">
+                    <p><strong>⚠️ Fonctionnalité à venir</strong> : Les fonctionnalités de sécurité seront disponibles prochainement.</p>
+                </div>
+
+                <h3 class="subtitle is-5">Changer le mot de passe</h3>
+
+                <div class="field">
+                    <label class="label">Mot de passe actuel</label>
+                    <div class="control">
+                        <input class="input" type="password" id="currentPassword" disabled>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Nouveau mot de passe</label>
+                    <div class="control">
+                        <input class="input" type="password" id="newPassword" disabled>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Confirmer le nouveau mot de passe</label>
+                    <div class="control">
+                        <input class="input" type="password" id="confirmPassword" disabled>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-warning" onclick="changePassword()" disabled>
+                            <span class="icon"><i class="fas fa-key"></i></span>
+                            <span>Changer le mot de passe</span>
+                        </button>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h3 class="subtitle is-5 has-text-danger">Zone dangereuse</h3>
+
+                <div class="notification is-danger is-light">
+                    <p><strong>Supprimer le compte :</strong> Cette action est irréversible. Toutes vos données seront définitivement supprimées.</p>
+                    <button class="button is-danger mt-3" onclick="confirmDeleteAccount()" disabled
+
+                <div class="notification is-danger is-light">
+                    <p><strong>Supprimer le compte :</strong> Cette action est irréversible. Toutes vos données seront définitivement supprimées.</p>
+                    <button class="button is-danger mt-3" onclick="confirmDeleteAccount()">
+                        <span class="icon"><i class="fas fa-trash"></i></span>
+                        <span>Supprimer mon compte</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Navigation entre onglets
+document.querySelectorAll('.menu-list a').forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Retirer la classe active de tous les liens
+        document.querySelectorAll('.menu-list a').forEach(l => l.classList.remove('is-active'));
+        
+        // Ajouter la classe active au lien cliqué
+        link.classList.add('is-active');
+        
+        // Cacher tous les onglets
+        document.querySelectorAll('.settings-tab').forEach(tab => tab.style.display = 'none');
+        
+        // Afficher l'onglet sélectionné
+        const tabId = 'tab-' + link.dataset.tab;
+        document.getElementById(tabId).style.display = 'block';
+    });
+});
+
+// Charger les paramètres au chargement
+window.addEventListener('DOMContentLoaded', () => {
+    loadSettings();
+});
+
+function loadSettings() {
+    // Charger depuis localStorage
+    document.getElementById('defaultCurrency').value = localStorage.getItem('defaultCurrency') || 'EUR';
+    document.getElementById('language').value = localStorage.getItem('language') || 'fr';
+    document.getElementById('dateFormat').value = localStorage.getItem('dateFormat') || 'DD/MM/YYYY';
+    
+    document.getElementById('darkMode').checked = localStorage.getItem('darkMode') === 'true';
+    document.getElementById('compactMode').checked = localStorage.getItem('compactMode') === 'true';
+    document.getElementById('showAccountTabs').checked = localStorage.getItem('showAccountTabs') !== 'false';
+    document.getElementById('rowsPerPage').value = localStorage.getItem('rowsPerPage') || '25';
+    
+    document.getElementById('notifTransactions').checked = localStorage.getItem('notifTransactions') !== 'false';
+    document.getElementById('notifBudgetAlerts').checked = localStorage.getItem('notifBudgetAlerts') !== 'false';
+    document.getElementById('notifGoals').checked = localStorage.getItem('notifGoals') === 'true';
+}
+
+function saveGeneralSettings() {
+    localStorage.setItem('defaultCurrency', document.getElementById('defaultCurrency').value);
+    localStorage.setItem('language', document.getElementById('language').value);
+    localStorage.setItem('dateFormat', document.getElementById('dateFormat').value);
+    
+    showNotification('Paramètres généraux enregistrés', 'success');
+}
+
+function saveDisplaySettings() {
+    localStorage.setItem('darkMode', document.getElementById('darkMode').checked);
+    localStorage.setItem('compactMode', document.getElementById('compactMode').checked);
+    localStorage.setItem('showAccountTabs', document.getElementById('showAccountTabs').checked);
+    localStorage.setItem('rowsPerPage', document.getElementById('rowsPerPage').value);
+    
+    // Appliquer le mode sombre immédiatement si activé
+    if (document.getElementById('darkMode').checked) {
+        document.documentElement.classList.add('dark-mode');
+    } else {
+        document.documentElement.classList.remove('dark-mode');
+    }
+    
+    showNotification('Paramètres d\'affichage enregistrés', 'success');
+}
+
+function saveNotificationSettings() {
+    localStorage.setItem('notifTransactions', document.getElementById('notifTransactions').checked);
+    localStorage.setItem('notifBudgetAlerts', document.getElementById('notifBudgetAlerts').checked);
+    localStorage.setItem('notifGoals', document.getElementById('notifGoals').checked);
+    
+    showNotification('Paramètres de notifications enregistrés', 'success');
+}
+
+function exportData(format) {
+    // TODO: Implémenter l'export via API
+    showNotification(`Export ${format.toUpperCase()} en cours...`, 'info');
+    
+    fetch(`/api/export/${format}`)
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cashstuffing_export_${new Date().toISOString().split('T')[0]}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            showNotification('Export réussi', 'success');
+        })
+        .catch(err => {
+            showNotification('Erreur lors de l\'export', 'danger');
+            console.error(err);
+        });
+}
+
+function importData() {
+    const file = document.getElementById('importFile').files[0];
+    if (!file) {
+        showNotification('Veuillez sélectionner un fichier', 'warning');
+        return;
+    }
+    
+    // TODO: Implémenter l'import via API
+    showNotification('Import en cours...', 'info');
+}
+
+// Afficher le nom du fichier sélectionné
+document.getElementById('importFile')?.addEventListener('change', (e) => {
+    const fileName = e.target.files[0]?.name || 'Aucun fichier sélectionné';
+    document.getElementById('importFileName').textContent = fileName;
+});
+
+function saveProfile() {
+    // TODO: Implémenter la sauvegarde du profil via API
+    showNotification('Profil enregistré', 'success');
+}
+
+function changePassword() {
+    const current = document.getElementById('currentPassword').value;
+    const newPwd = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    
+    if (!current || !newPwd || !confirm) {
+        showNotification('Tous les champs sont requis', 'warning');
+        return;
+    }
+    
+    if (newPwd !== confirm) {
+        showNotification('Les mots de passe ne correspondent pas', 'danger');
+        return;
+    }
+    
+    // TODO: Implémenter le changement de mot de passe via API
+    showNotification('Mot de passe changé avec succès', 'success');
+    
+    // Réinitialiser les champs
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+}
+
+function confirmDeleteAccount() {
+    if (confirm('Êtes-vous ABSOLUMENT sûr de vouloir supprimer votre compte ? Cette action est IRRÉVERSIBLE.')) {
+        // TODO: Implémenter la suppression via API
+        showNotification('Suppression du compte...', 'danger');
+    }
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification is-${type}`;
+    notification.innerHTML = `
+        <button class="delete"></button>
+        ${message}
+    `;
+    
+    document.querySelector('.container').insertBefore(notification, document.querySelector('.section'));
+    
+    notification.querySelector('.delete').addEventListener('click', () => {
+        notification.remove();
+    });
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

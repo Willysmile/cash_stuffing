@@ -2,7 +2,7 @@
 Routes HTMX pour les comptes bancaires
 Endpoints retournant des fragments HTML pour HTMX
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +12,9 @@ from decimal import Decimal
 
 from app.database import get_db
 from app.models import User, BankAccount
+from app.models.transaction import Transaction
 from app.utils.dependencies import get_current_user
+from datetime import date
 
 templates_dir = Path(__file__).parent.parent.parent.parent / "frontend" / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
@@ -51,25 +53,73 @@ async def list_accounts_htmx(
     )
 
 
+@router.get("/rows", response_class=HTMLResponse)
+async def list_accounts_rows_htmx(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Retourne seulement les lignes du tableau pour HTMX."""
+    result = await db.execute(
+        select(BankAccount).where(BankAccount.user_id == current_user.id)
+    )
+    accounts = result.scalars().all()
+    
+    return templates.TemplateResponse(
+        "components/accounts_rows.html",
+        {"request": request, "accounts": accounts}
+    )
+
+
 @router.post("", response_class=HTMLResponse)
 async def create_account_htmx(
-    name: str,
-    account_number: str = None,
-    balance: float = 0,
+    name: str = Form(...),
+    account_number: str = Form(None),
+    balance: float = Form(0),
+    account_type: str = Form("checking"),
+    currency: str = Form("EUR"),
+    color: str = Form(None),
+    icon: str = Form(None),
+    is_active: str = Form("true"),
     request: Request = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Crée un nouveau compte bancaire."""
     try:
+        # Convertir is_active string en booléen
+        is_active_bool = is_active.lower() in ('true', 'on', 'yes', '1')
+        
         account = BankAccount(
             user_id=current_user.id,
             name=name,
+            account_type=account_type,
             account_number=account_number,
-            balance=Decimal(str(balance))
+            initial_balance=Decimal(str(balance)),
+            current_balance=Decimal(str(balance)),
+            currency=currency,
+            color=color,
+            icon=icon,
+            is_active=is_active_bool
         )
         db.add(account)
         await db.commit()
+        await db.refresh(account)
+        
+        # Créer une transaction initiale si le solde > 0
+        if balance > 0:
+            initial_transaction = Transaction(
+                user_id=current_user.id,
+                bank_account_id=account.id,
+                category_id=1,  # Catégorie par défaut (à ajuster selon vos besoins)
+                amount=Decimal(str(balance)),
+                transaction_type="income",
+                date=date.today(),
+                description=f"Solde initial du compte {name}",
+                is_recurring=False
+            )
+            db.add(initial_transaction)
+            await db.commit()
         
         result = await db.execute(
             select(BankAccount).where(BankAccount.user_id == current_user.id)
@@ -77,7 +127,7 @@ async def create_account_htmx(
         accounts = result.scalars().all()
         
         return templates.TemplateResponse(
-            "components/accounts_table.html",
+            "components/accounts_rows.html",
             {"request": request, "accounts": accounts}
         )
     except Exception as e:
@@ -85,7 +135,7 @@ async def create_account_htmx(
 
 
 @router.post("", response_class=HTMLResponse)
-async def create_account_htmx(
+async def create_account_htmx_dup(
     name: str,
     account_number: str = None,
     balance: float = 0,
@@ -145,9 +195,13 @@ async def account_edit_modal(
 @router.put("/{account_id:int}", response_class=HTMLResponse)
 async def update_account_htmx(
     account_id: int,
-    name: str,
-    account_number: str = None,
-    balance: float = 0,
+    name: str = Form(None),
+    account_type: str = Form(None),
+    account_number: str = Form(None),
+    current_balance: float = Form(None),
+    color: str = Form(None),
+    icon: str = Form(None),
+    is_active: str = Form(None),
     request: Request = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -164,9 +218,21 @@ async def update_account_htmx(
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
     
-    account.name = name
-    account.account_number = account_number
-    account.balance = Decimal(str(balance))
+    if name is not None:
+        account.name = name
+    if account_type is not None:
+        account.account_type = account_type
+    if account_number is not None:
+        account.account_number = account_number
+    if current_balance is not None:
+        account.current_balance = Decimal(str(current_balance))
+    if color is not None:
+        account.color = color
+    if icon is not None:
+        account.icon = icon
+    if is_active is not None:
+        # Convertir is_active string en booléen
+        account.is_active = is_active.lower() in ('true', 'on', 'yes', '1')
     await db.commit()
     
     result = await db.execute(
@@ -175,7 +241,7 @@ async def update_account_htmx(
     accounts = result.scalars().all()
     
     return templates.TemplateResponse(
-        "components/accounts_table.html",
+        "components/accounts_rows.html",
         {"request": request, "accounts": accounts}
     )
 
@@ -208,6 +274,6 @@ async def delete_account_htmx(
     accounts = result.scalars().all()
     
     return templates.TemplateResponse(
-        "components/accounts_table.html",
+        "components/accounts_rows.html",
         {"request": request, "accounts": accounts}
     )

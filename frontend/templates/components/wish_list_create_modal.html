@@ -3,10 +3,7 @@
   <div class="modal-card">
     <header class="modal-card-head has-background-link">
       <p class="modal-card-title has-text-white">Nouvelle liste de souhaits</p>
-      <button class="delete" hx-on="click: this.closest('.modal').classList.remove('is-active')"></button>
-    </header>
-    <section class="modal-card-body">
-      <form>
+      <button class="delete" onclick="document.getElementById('wish-list-create-modal').classList.remove('is-active')"></button>
         <div class="field">
           <label class="label">Nom *</label>
           <div class="control">
@@ -22,8 +19,7 @@
         </div>
       </form>
     </section>
-    <footer class="modal-card-foot">
-      <button class="button" hx-on="click: this.closest('.modal').classList.remove('is-active')">
+      <button class="button" onclick="document.getElementById('wish-list-create-modal').classList.remove('is-active')">
         Annuler
       </button>
       <button class="button is-link"

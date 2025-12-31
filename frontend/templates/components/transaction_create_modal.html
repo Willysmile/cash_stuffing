@@ -3,7 +3,7 @@
   <div class="modal-card">
     <header class="modal-card-head has-background-info">
       <p class="modal-card-title has-text-white">Nouvelle transaction</p>
-      <button class="delete" hx-on="click: this.closest('.modal').classList.remove('is-active')"></button>
+      <button class="delete" onclick="document.getElementById('transaction-create-modal').classList.remove('is-active')"></button>
     </header>
     <section class="modal-card-body">
       <form>
@@ -90,7 +90,7 @@
       </form>
     </section>
     <footer class="modal-card-foot">
-      <button class="button" hx-on="click: this.closest('.modal').classList.remove('is-active')">
+      <button class="button" onclick="document.getElementById('transaction-create-modal').classList.remove('is-active')">
         Annuler
       </button>
       <button class="button is-info"

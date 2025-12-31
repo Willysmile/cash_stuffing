@@ -34,17 +34,31 @@
         </div>
     </div>
 
-    <!-- Conteneur pour charger les comptes via HTMX -->
-    <div id="accounts-container"
-         hx-get="/api/bank-accounts/htmx"
-         hx-trigger="load"
-         hx-swap="innerHTML">
-        <div class="has-text-centered">
-            <span class="icon is-large">
-                <i class="fas fa-spinner fa-pulse fa-2x"></i>
-            </span>
-            <p>Chargement des comptes...</p>
-        </div>
+    <!-- Conteneur pour les comptes -->
+    <div id="accounts-container">
+        <table class="table is-fullwidth is-hoverable">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Numéro de compte</th>
+                    <th>Solde</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="accounts-tbody"
+                   hx-get="/api/bank-accounts/htmx/rows"
+                   hx-trigger="load"
+                   hx-swap="innerHTML">
+                <tr>
+                    <td colspan="4" class="has-text-centered">
+                        <span class="icon is-large">
+                            <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                        </span>
+                        <p>Chargement des comptes...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 

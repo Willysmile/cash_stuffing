@@ -20,9 +20,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Retirer la colonne envelope_id de la table transactions
-    with op.batch_alter_table('transactions', schema=None) as batch_op:
-        batch_op.drop_column('envelope_id')
+    # Cette migration est obsolète - envelope_id doit rester dans transactions
+    pass
 
 
 def downgrade() -> None:

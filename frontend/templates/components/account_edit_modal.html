@@ -1,47 +1,131 @@
 <div class="modal" id="account-edit-modal">
   <div class="modal-background"></div>
   <div class="modal-card">
-    <header class="modal-card-head">
-      <p class="modal-card-title">Éditer le compte</p>
-      <button class="delete" hx-on="click: this.closest('.modal').classList.remove('is-active')"></button>
+    <header class="modal-card-head has-background-info">
+      <p class="modal-card-title has-text-white">Éditer le compte</p>
+      <button class="delete" onclick="document.getElementById('account-edit-modal').classList.remove('is-active')"></button>
     </header>
     <section class="modal-card-body">
-      <form>
-        <div class="field">
-          <label class="label">Nom</label>
-          <div class="control">
-            <input class="input" type="text" name="name" value="{{ account.name }}" required>
+      <form hx-put="/api/bank-accounts/htmx/{{ account.id }}"
+            hx-target="#accounts-tbody"
+            hx-swap="innerHTML"
+            hx-on="htmx:afterSwap: document.getElementById('account-edit-modal').classList.remove('is-active')">
+        <!-- Nom et Type -->
+        <div class="columns">
+          <div class="column is-7">
+            <div class="field">
+              <label class="label">Nom</label>
+              <div class="control has-icons-left">
+                <input class="input" 
+                       type="text" 
+                       name="name" 
+                       value="{{ account.name }}" 
+                       required 
+                       minlength="1" 
+                       maxlength="100">
+                <span class="icon is-left"><i class="fas fa-wallet"></i></span>
+              </div>
+            </div>
+          </div>
+          <div class="column is-5">
+            <div class="field">
+              <label class="label">Type</label>
+              <div class="control">
+                <div class="select is-fullwidth">
+                  <select name="account_type">
+                    <option value="checking" {% if account.account_type == 'checking' %}selected{% endif %}>Courant</option>
+                    <option value="savings" {% if account.account_type == 'savings' %}selected{% endif %}>Épargne</option>
+                    <option value="livret" {% if account.account_type == 'livret' %}selected{% endif %}>Livret</option>
+                    <option value="cash" {% if account.account_type == 'cash' %}selected{% endif %}>Espèces</option>
+                    <option value="other" {% if account.account_type == 'other' %}selected{% endif %}>Autre</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
+        <!-- Solde -->
         <div class="field">
-          <label class="label">Numéro de compte</label>
-          <div class="control">
-            <input class="input" type="text" name="account_number" value="{{ account.account_number or '' }}">
+          <label class="label">Solde actuel (€)</label>
+          <div class="control has-icons-left">
+            <input class="input" 
+                   type="number" 
+                   name="current_balance" 
+                   value="{{ account.current_balance }}" 
+                   step="0.01" 
+                   required>
+            <span class="icon is-left"><i class="fas fa-euro-sign"></i></span>
           </div>
         </div>
 
+        <!-- IBAN, Couleur et Icône -->
+        <div class="columns">
+          <div class="column is-6">
+            <div class="field">
+              <label class="label">IBAN/Numéro</label>
+              <div class="control">
+                <input class="input" 
+                       type="text" 
+                       name="account_number" 
+                       value="{{ account.account_number or '' }}"
+                       maxlength="50">
+              </div>
+            </div>
+          </div>
+          <div class="column is-3">
+            <div class="field">
+              <label class="label">Couleur</label>
+              <div class="control">
+                <input class="input" 
+                       type="color" 
+                       name="color" 
+                       value="{{ account.color or '#3273dc' }}">
+              </div>
+            </div>
+          </div>
+          <div class="column is-3">
+            <div class="field">
+              <label class="label">Icône</label>
+              <div class="control">
+                <input class="input" 
+                       type="text" 
+                       name="icon" 
+                       value="{{ account.icon or '' }}" 
+                       placeholder="🏦"
+                       maxlength="10">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- État -->
         <div class="field">
-          <label class="label">Solde</label>
           <div class="control">
-            <input class="input" type="number" name="balance" value="{{ account.current_balance }}" step="0.01" required>
+            <label class="checkbox">
+              <input type="checkbox" name="is_active" value="true" {% if account.is_active %}checked{% endif %}>
+              Compte actif
+            </label>
+          </div>
+        </div>
+
+        <!-- Boutons -->
+        <div class="field is-grouped mt-5">
+          <div class="control">
+            <button type="submit" class="button is-info">
+              Enregistrer
+            </button>
+          </div>
+          <div class="control">
+            <button type="button" 
+                    class="button"
+                    onclick="document.getElementById('account-edit-modal').classList.remove('is-active')">
+              Annuler
+            </button>
           </div>
         </div>
       </form>
     </section>
-    <footer class="modal-card-foot">
-      <button class="button" hx-on="click: this.closest('.modal').classList.remove('is-active')">
-        Annuler
-      </button>
-      <button class="button is-success"
-              hx-put="/api/bank-accounts/htmx/{{ account.id }}"
-              hx-include="closest form"
-              hx-target="#accounts-tbody"
-              hx-swap="innerHTML"
-              hx-on="htmx:afterSwap: document.getElementById('account-edit-modal').classList.remove('is-active')">
-        Enregistrer
-      </button>
-    </footer>
   </div>
 </div>
 

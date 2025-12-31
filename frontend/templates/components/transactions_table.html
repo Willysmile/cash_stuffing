@@ -28,8 +28,8 @@
                         {% endif %}
                     </td>
                     <td>{{ tx.bank_account.name if tx.bank_account else 'Espèces' }}</td>
-                    <td class="has-text-right {% if tx.type == 'income' %}has-text-success{% else %}has-text-danger{% endif %}">
-                        {{ '+' if tx.type == 'income' else '-' }}{{ "%.2f"|format(tx.amount) }}€
+                    <td class="has-text-right {% if tx.transaction_type == 'income' %}has-text-success{% else %}has-text-danger{% endif %}">
+                        {{ '+' if tx.transaction_type == 'income' else '-' }}{{ "%.2f"|format(tx.amount) }}€
                     </td>
                     <td>
                         <div class="buttons are-small">

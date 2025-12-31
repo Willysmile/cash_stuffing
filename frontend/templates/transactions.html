@@ -11,39 +11,107 @@
 </section>
 
 <div class="section">
-    <div class="level">
-        <div class="level-left">
-            <div class="level-item">
+    <!-- Bouton créer -->
+    <div style="margin-bottom: 1.5rem;">
+        <button class="button is-success" hx-get="/api/transactions/htmx/create" hx-target="#modal-container" hx-swap="innerHTML">
+            <span class="icon"><i class="fas fa-plus"></i></span>
+            <span>Nouvelle transaction</span>
+        </button>
+    </div>
+
+    <div class="columns">
+        <!-- Filtres à droite -->
+        <div class="column is-3-desktop is-12-mobile">
+            <div class="box">
+                <h3 class="title is-5">Filtres</h3>
+                
+                <!-- Recherche -->
                 <div class="field">
+                    <label class="label is-small">Recherche</label>
                     <div class="control has-icons-left">
-                        <input class="input" type="text" id="searchInput" placeholder="Rechercher...">
-                        <span class="icon is-left">
+                        <input class="input is-small" type="text" id="searchInput" placeholder="Description, payee...">
+                        <span class="icon is-small is-left">
                             <i class="fas fa-search"></i>
                         </span>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="level-right">
-            <div class="level-item">
-                <button class="button is-success" hx-get="/api/transactions/htmx/create" hx-target="#modal-container" hx-swap="innerHTML">
-                    <span class="icon"><i class="fas fa-plus"></i></span>
-                    <span>Nouvelle transaction</span>
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Conteneur pour charger les transactions via HTMX -->
-    <div id="transactions-container"
-         hx-get="/api/transactions/htmx"
-         hx-trigger="load"
-         hx-swap="innerHTML">
-        <div class="has-text-centered">
-            <span class="icon is-large">
-                <i class="fas fa-spinner fa-pulse fa-2x"></i>
-            </span>
-            <p>Chargement des transactions...</p>
+                <!-- Type de transaction -->
+                <div class="field">
+                    <label class="label is-small">Type</label>
+                    <div class="control">
+                        <div class="select is-small is-fullwidth">
+                            <select id="typeFilter">
+                                <option value="">Tous</option>
+                                <option value="income">Revenus</option>
+                                <option value="expense">Dépenses</option>
+                                <option value="transfer">Transferts</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plage de dates -->
+                <div class="field">
+                    <label class="label is-small">Période</label>
+                    <div class="control">
+                        <input class="input is-small" type="date" id="dateFromFilter">
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label is-small" style="visibility: hidden;">à</label>
+                    <div class="control">
+                        <input class="input is-small" type="date" id="dateToFilter">
+                    </div>
+                </div>
+
+                <!-- Montant -->
+                <div class="field">
+                    <label class="label is-small">Montant min</label>
+                    <div class="control">
+                        <input class="input is-small" type="number" id="minAmountFilter" placeholder="0" step="0.01">
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label is-small">Montant max</label>
+                    <div class="control">
+                        <input class="input is-small" type="number" id="maxAmountFilter" placeholder="∞" step="0.01">
+                    </div>
+                </div>
+
+                <!-- Bouton réinitialiser -->
+                <div class="field">
+                    <button class="button is-small is-fullwidth is-text" id="resetFilters">
+                        <span class="icon is-small"><i class="fas fa-redo"></i></span>
+                        <span>Réinitialiser</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenu principal avec onglets -->
+        <div class="column is-9-desktop is-12-mobile">
+            <!-- Onglets des comptes -->
+            <div class="tabs is-boxed" id="account-tabs">
+                <ul id="tab-list">
+                    <li class="is-active" id="all-accounts-tab">
+                        <a href="#" data-account-id="all">
+                            <span class="icon is-small"><i class="fas fa-list"></i></span>
+                            <span>Tous les comptes</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Conteneur pour charger les transactions via HTMX -->
+            <div id="transactions-container">
+                <div class="has-text-centered">
+                    <span class="icon is-large">
+                        <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                    </span>
+                    <p>Chargement des transactions...</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -51,15 +119,113 @@
 <div id="modal-container"></div>
 
 <script>
-// Gestion de la recherche côté client
+// Initialiser les onglets des comptes
+async function initAccountTabs() {
+    try {
+        const response = await fetch('/api/bank_accounts');
+        const data = await response.json();
+        
+        // Gérer les différents formats de réponse
+        const accounts = Array.isArray(data) ? data : (data.items || data.data || []);
+        
+        if (!Array.isArray(accounts)) {
+            console.warn('Format de réponse inattendu:', data);
+            return;
+        }
+        
+        const tabList = document.getElementById('tab-list');
+        
+        // Garder l'onglet "Tous"
+        const allTab = tabList.querySelector('li');
+        
+        // Ajouter les onglets des comptes
+        accounts.forEach(account => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <a href="#" data-account-id="${account.id}">
+                    <span class="icon is-small"><i class="fas fa-university"></i></span>
+                    <span>${account.name}</span>
+                </a>
+            `;
+            tabList.appendChild(li);
+        });
+
+        // Gestionnaire de clics sur les onglets
+        tabList.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                tabList.querySelectorAll('li').forEach(li => li.classList.remove('is-active'));
+                link.closest('li').classList.add('is-active');
+                
+                const accountId = link.dataset.accountId;
+                // Charger les transactions pour ce compte
+                if (accountId === 'all') {
+                    htmx.ajax('GET', '/api/transactions/htmx', '#transactions-container');
+                } else {
+                    htmx.ajax('GET', `/api/transactions/htmx?bank_account_id=${accountId}`, '#transactions-container');
+                }
+            });
+        });
+        
+        // Charger les transactions du premier onglet (Tous) par défaut
+        htmx.ajax('GET', '/api/transactions/htmx', '#transactions-container');
+        
+        // Gérer l'affichage de l'onglet "Tous les comptes" selon les paramètres
+        applyShowAllAccountsTabSetting();
+        
+    } catch (error) {
+        console.error('Erreur lors du chargement des comptes:', error);
+    }
+}
+
+// Gestion des filtres
+document.getElementById('resetFilters')?.addEventListener('click', () => {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('typeFilter').value = '';
+    document.getElementById('dateFromFilter').value = '';
+    document.getElementById('dateToFilter').value = '';
+    document.getElementById('minAmountFilter').value = '';
+    document.getElementById('maxAmountFilter').value = '';
+});
+
 document.getElementById('searchInput')?.addEventListener('input', (e) => {
     const searchText = e.target.value.toLowerCase();
     const rows = document.querySelectorAll('#transactions-container table tbody tr');
-    
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(searchText) ? '' : 'none';
     });
+});
+
+// Initialiser à la page chargée
+document.addEventListener('DOMContentLoaded', initAccountTabs);
+
+// Appliquer le paramètre d'affichage de l'onglet "Tous les comptes"
+function applyShowAllAccountsTabSetting() {
+    const showAllTab = localStorage.getItem('showAccountTabs');
+    const allAccountsTab = document.getElementById('all-accounts-tab');
+    
+    if (allAccountsTab) {
+        if (showAllTab === 'false') {
+            allAccountsTab.style.display = 'none';
+            // Si l'onglet "Tous" est caché, sélectionner le premier compte disponible
+            const firstAccountTab = document.querySelector('#tab-list li:not(#all-accounts-tab)');
+            if (firstAccountTab) {
+                firstAccountTab.classList.add('is-active');
+                const accountId = firstAccountTab.querySelector('a').dataset.accountId;
+                htmx.ajax('GET', `/api/transactions/htmx?bank_account_id=${accountId}`, '#transactions-container');
+            }
+        } else {
+            allAccountsTab.style.display = '';
+        }
+    }
+}
+
+// Écouter les changements du paramètre depuis la page paramètres
+window.addEventListener('storage', (e) => {
+    if (e.key === 'showAccountTabs') {
+        applyShowAllAccountsTabSetting();
+    }
 });
 </script>
 {% endblock %}
