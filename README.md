@@ -27,14 +27,15 @@
 
 ### ✨ Fonctionnalités principales
 
-- ✅ Gestion multi-comptes bancaires
+- ✅ Gestion multi-comptes bancaires (avec IBAN, type, couleur, icône)
 - ✅ Catégories personnalisables avec icônes et couleurs
-- ✅ Enveloppes budgétaires mensuelles
-- ✅ Suivi des transactions (revenus et dépenses)
+- ✅ Enveloppes budgétaires avec statistiques et filtres avancés
+- ✅ Suivi des transactions (revenus et dépenses) avec onglets par compte
 - ✅ Réallocation de fonds entre enveloppes
-- ✅ Dashboard avec statistiques et graphiques
-- ✅ Filtres avancés et recherche
-- ✅ Design responsive (mobile et desktop)
+- ✅ Dashboard avec statistiques et graphiques interactifs
+- ✅ Page paramètres avec persistance des préférences
+- ✅ Filtres avancés, recherche temps réel, vues multiples
+- ✅ Design responsive (mobile et desktop) avec Bulma CSS
 - ✅ Authentification sécurisée (JWT)
 - ✅ Listes de souhaits pour planifier vos achats
 

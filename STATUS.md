@@ -1,8 +1,8 @@
 # 🎯 Statut du Projet Cash Stuffing
 
-**Dernière mise à jour** : 27 décembre 2025  
-**Version** : MVP 1.0  
-**Progression globale** : 🟢 **100% MVP COMPLET**
+**Dernière mise à jour** : 31 décembre 2025  
+**Version** : MVP 1.1 (UX Enhanced)  
+**Progression globale** : 🟢 **110% MVP+ UX Overhaul COMPLET**
 
 ---
 
@@ -59,18 +59,19 @@ Le MVP (Minimum Viable Product) de l'application Cash Stuffing est **100% termin
 
 ## ✅ Frontend Web - COMPLET
 
-### Pages implémentées : 8/8 ✅
+### Pages implémentées : 9/9 ✅
 
 | Page | Route | Fonctionnalités | Statut |
 |------|-------|-----------------|--------|
 | **Login** | `/auth/login` | Connexion JWT | ✅ Complet |
 | **Register** | `/auth/register` | Inscription | ✅ Complet |
 | **Dashboard** | `/dashboard` | Stats + Graphiques | ✅ Complet |
-| **Transactions** | `/transactions` | CRUD + Filtres | ✅ Complet |
-| **Enveloppes** | `/envelopes` | CRUD + Réallocation | ✅ Complet |
-| **Comptes** | `/accounts` | CRUD Comptes | ✅ Complet |
+| **Transactions** | `/transactions` | CRUD + Filtres + Onglets | ✅ Complet |
+| **Enveloppes** | `/envelopes` | CRUD + Stats + Filtres + Vues | ✅ Complet (UX 2.0) |
+| **Comptes** | `/accounts` | CRUD Complet + IBAN | ✅ Complet (Forms v2) |
 | **Catégories** | `/categories` | CRUD Catégories | ✅ Complet |
 | **Wish Lists** | `/wish-lists` | Route prête (UI à créer) | ⏳ En attente |
+| **Paramètres** | `/settings` | Préférences + localStorage | ✅ Complet (4 TODO backend) |
 
 ### Composants UI
 
@@ -98,6 +99,32 @@ Le MVP (Minimum Viable Product) de l'application Cash Stuffing est **100% termin
 - ✅ Guide d'utilisation des composants
 - ✅ Exemples de code JavaScript
 - ✅ Patterns et bonnes pratiques
+
+### 🎨 Améliorations UX (31 déc 2025)
+
+#### Page Comptes
+- ✅ Formulaire complet (IBAN, type, couleur, icône, devise)
+- ✅ Migration `account_number` (String 50, nullable)
+- ✅ Transaction initiale automatique pour solde
+- ✅ Template séparé `accounts_rows.html`
+
+#### Page Paramètres (NOUVEAU)
+- ✅ 7 sections menu latéral
+- ✅ Persistance localStorage
+- ✅ 3 sections actives (Général, Affichage, Notifications)
+- ⏳ 4 sections TODO (Export, Import, Profil, Sécurité)
+
+#### Page Enveloppes (Refonte complète)
+- ✅ Statistiques globales (4 indicateurs)
+- ✅ Recherche + filtre statut
+- ✅ Vue grille/liste avec toggle
+- ✅ Cartes redesignées (montants centrés, tags, footer form)
+- ✅ Calcul stats dynamique JavaScript
+
+#### Corrections HTMX
+- ✅ Fix modales : `hx-on` → `onclick`
+- ✅ Fix transactions : `tx.type` → `tx.transaction_type`
+- ✅ Fix tabs initialisation (ordre manuel)
 
 ---
 
